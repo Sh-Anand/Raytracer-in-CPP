@@ -166,3 +166,18 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
   return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                          rand() / (float)RAND_MAX);
 }
+
+Eigen::Vector3f rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
+
+}
+
+bool rayTriangleIntersection(Eigen::Vector3f &rayPoint, Eigen::Vector3f &rayDirection, Tucano::Face &triangle, Tucano::Mesh &mesh) {
+	Eigen::Vector3f vertices[3] = { mesh.getVertex(triangle.vertex_ids[0]) , mesh.getVertex(triangle.vertex_ids[1]), mesh.getVertex(triangle.vertex_ids[2]) };
+	Eigen::Vector3f triangleNormal = triangle.normal;
+
+	if (rayDirection.dot(triangleNormal) == 0) {
+		return false;
+	}
+
+	Eigen::Vector3f intersection = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
+}
