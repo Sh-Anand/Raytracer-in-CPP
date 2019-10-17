@@ -166,3 +166,6 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
   return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                          rand() / (float)RAND_MAX);
 }
+
+
+

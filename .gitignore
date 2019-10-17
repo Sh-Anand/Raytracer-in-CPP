@@ -36,3 +36,4 @@
 
 #Debug builds
 out/build/*
+x64/Debug/*
