@@ -36,3 +36,6 @@
 
 #folders
 x64/
+
+#pdf
+.pdf

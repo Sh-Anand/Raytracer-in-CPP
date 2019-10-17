@@ -1,4 +1,4 @@
-#include "flyscene.hpp"
+﻿#include "flyscene.hpp"
 #include <GLFW/glfw3.h>
 #include<iostream>
 #include <thread>
@@ -6,7 +6,7 @@
 #include <ctime>
 
 #define epsilon 0.00001f
-#define BACKGROUND Eigen::Vector3f(0.f, 0.f, 0.f)
+#define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
 
@@ -134,16 +134,34 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   ray.resetModelMatrix();
   // from pixel position to world coordinates
   Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
-
   // direction from camera center to click position
   Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
-  
   // position and orient the cylinder representing the ray
   ray.setOriginOrientation(flycamera.getCenter(), dir);
 
   // place the camera representation (frustum) on current camera location, 
   camerarep.resetModelMatrix();
   camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+
+
+  //Try to intersect the triangle to see where to stop drawing the ray
+  Eigen::Vector4f bestIntersection = 
+	  Eigen::Vector4f(0.f, -1.f, -1.f, std::numeric_limits<float>::max());
+  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+	  Tucano::Face currTriangle = mesh.getFace(i);
+	  Eigen::Vector4f intersection = 
+		  rayTriangleIntersect(screen_pos, dir, currTriangle);
+	  if (intersection.x() != 0.f && intersection.w() < bestIntersection.w()) {
+		  bestIntersection = intersection;
+	  }
+  }
+
+  if (bestIntersection.x() == 1.f) {
+	  ray.setSize(0.005, abs(bestIntersection.w()));
+  }
+  else {
+	  ray.setSize(0.005, 10.0);
+  }
 }
 
 void printProgress(float percentage) {
@@ -191,7 +209,7 @@ void Flyscene::raytraceScene(int width, int height) {
   Eigen::Vector3f screen_coords;
 
 
-  total_num_of_rays = image_size[1] * image_size[0];
+  total_num_of_rays = (float) (image_size[1] * image_size[0]);
 
 
   std::thread progressBarThread(progressLoop);
@@ -209,53 +227,57 @@ void Flyscene::raytraceScene(int width, int height) {
 	  ray_done_counter++;
     }
   }
-  done_ray_tracing = true;
 
-  progressBarThread.join();
+
   std::cout << "" << std::endl;
   fflush(stdout);
   // write the ray tracing result to a PPM image
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
   std::cout << "ray tracing done! " << std::endl;
+  done_ray_tracing = true;
+  progressBarThread.join();
 }
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	Eigen::Vector3f& dest) {
 	// just some fake random color per pixel until you implement your ray tracing
 	// remember to return your RGB values as floats in the range [0, 1]!!!
-
-	  std::vector<float> bestIntersection;
-	  bestIntersection.push_back(0.f);
-	  bestIntersection.push_back(-1.f);
-	  bestIntersection.push_back(-1.f);
-	  bestIntersection.push_back(std::numeric_limits<float>::max());
-
+		
+	  //Store the best intersection (triangle closest to the camera) and the index of the triangle
+	  Eigen::Vector4f bestIntersection = Eigen::Vector4f(0.f, -1.f, -1.f, std::numeric_limits<float>::max());
 	  int bestIntersectionTriangleIndex = -1;
-	  //Number of faces does not work
+	  Eigen::Vector3f direction = dest - origin;
+	  //Loop through all of the faces
 	  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-	  	Eigen::Vector3f direction = dest - origin;
+		//get a direction vector
 		Tucano::Face currTriangle = mesh.getFace(i);
-	  	std::vector<float> intersection = rayTriangleIntersect(origin, direction, currTriangle);
-		if (intersection.at(0) != 0.f && intersection.at(3) < bestIntersection.at(3)) {
-			bestIntersection.at(1) = intersection.at(1);
-			bestIntersection.at(2) = intersection.at(2);
-			bestIntersection.at(3) = intersection.at(3);
+		Eigen::Vector4f intersection = rayTriangleIntersect(origin, direction, currTriangle);
+		if (intersection.x() != 0.f && intersection.w() < bestIntersection.w()) {
+			bestIntersection = intersection;
 			bestIntersectionTriangleIndex = i;
 		}
 	  }
 	  if (bestIntersectionTriangleIndex == -1) {
 		  return BACKGROUND;
 	  }
-	return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-		rand() / (float)RAND_MAX);
+
+	  Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
+	  return mat.getAmbient() + mat.getDiffuse() + mat.getSpecular();
+	//return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
+		//rand() / (float)RAND_MAX);
+
 }
 
-std::vector<float> Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle)
+
+//To understand this algorithm, please check this book:
+//Möller Tomas, Eric Haines, and Naty Hoffman. Real-Time Rendering. Boca Raton: CRC Press, 2019. Print. Page 746
+// It has a very detailed explanation behind the mathematics of the ray-triangle intersection.
+Eigen::Vector4f Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle)
 {
-	std::vector<float> result;
-	Eigen::Vector3f p0 = mesh.getVertex(triangle.vertex_ids[0]).head<3>();
-	Eigen::Vector3f p1 = mesh.getVertex(triangle.vertex_ids[1]).head<3>();
-	Eigen::Vector3f p2 = mesh.getVertex(triangle.vertex_ids[2]).head<3>();
+	Eigen::Vector4f result = Eigen::Vector4f(0.f, 0.f, 0.f, 0.f);
+	Eigen::Vector3f p0 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>(); //mesh.getVertex(triangle.vertex_ids[0]).head<3>()
+	Eigen::Vector3f p1 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>();
+	Eigen::Vector3f p2 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>();
 
 	Eigen::Vector3f edge1 = p1 - p0;
 	Eigen::Vector3f edge2 = p2 - p0;
@@ -264,7 +286,6 @@ std::vector<float> Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen
 	float a = q.dot(edge1);
 
 	if (a > -epsilon && a < epsilon) {
-		result.push_back(0.f);
 		return result;
 	}
 
@@ -273,7 +294,6 @@ std::vector<float> Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen
 	float u = f * s.dot(q);
 
 	if (u < 0.f) {
-		result.push_back(0.f);
 		return result;
 	}
 
@@ -281,13 +301,10 @@ std::vector<float> Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen
 	float v = f * direction.dot(r);
 
 	if (v < 0.f || u + v > 1.f) {
-		result.push_back(0.f);
 		return result;
 	}
 	float t = f * edge2.dot(r);
-	result.push_back(1.f);
-	result.push_back(u);
-	result.push_back(v);
-	result.push_back(t);
+	result = Eigen::Vector4f(1.f, u, v, t);
+
 	return result;
 }

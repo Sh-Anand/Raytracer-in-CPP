@@ -76,7 +76,7 @@ public:
    * @param triangle Triangle we are currently investigating
    * @return a RGB color
   */
-  std::vector<float> rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
+  Eigen::Vector4f rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
 
 private:
   // A simple phong shader for rendering meshes
