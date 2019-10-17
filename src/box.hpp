@@ -9,7 +9,7 @@
 
 class box
 {
-Eigen::Vector3f bounds[2];
+private: Eigen::Vector3f bounds[2];
 
 public:
 	box(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax);

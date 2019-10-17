@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+
 	box::box(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax)
 	{
 		bounds[0] = vmin;
@@ -12,18 +13,18 @@
 	bool box::boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest)
 	{
 		//Calculate direction
-		Eigen::Vector3f dir = normalize(dest - origin);
+		Eigen::Vector3f dir = dest - origin;
 		//Get the bounds of the box
 		Eigen::Vector3f vmin = bounds[0];
 		Eigen::Vector3f vmax = bounds[1];
 
 		//Calculate intersection parameter for six sides of box
-		float txmin = (vmin.x - dir.x) / dir.x;
-		float txmax = (vmax.x - dir.x) / dir.x;
-		float tymin = (vmin.y - dir.y) / dir.y;
-		float tymax = (vmax.y - dir.y) / dir.y;
-		float tzmin = (vmin.z - dir.z) / dir.z;
-		float tzmax = (vmax.z - dir.z) / dir.z;
+		float txmin = (vmin.x - origin.x) / dir.x;
+		float txmax = (vmax.x - origin.x) / dir.x;
+		float tymin = (vmin.y - origin.y) / dir.y;
+		float tymax = (vmax.y - origin.y) / dir.y;
+		float tzmin = (vmin.z - origin.z) / dir.z;
+		float tzmax = (vmax.z - origin.z) / dir.z;
 
 		//Determine when we first cross (in point) and last cross (out) the correspondong
 		//planes along each axis
