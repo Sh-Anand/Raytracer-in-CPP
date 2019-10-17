@@ -33,3 +33,6 @@
 
 #VS Specific
 .vs
+
+#Debug builds
+out/build/*
