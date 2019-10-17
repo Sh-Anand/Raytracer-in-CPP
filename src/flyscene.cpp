@@ -1,9 +1,31 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+#include<iostream>
+#include <thread>
+#include <chrono>
+#include <ctime>
+
+#define epsilon 0.00001f
+#define BACKGROUND Eigen::Vector3f(0.f, 0.f, 0.f)
+#define PROGRESS_BAR_STR "=================================================="
+#define PROGRESS_BAR_WIDTH 50
+
+// Fields for the progress bar
+float progress;
+float total_num_of_rays;
+unsigned int ray_done_counter;
+bool done_ray_tracing;
+
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
+
+  //////////////////////////
+  done_ray_tracing = false;
+  progress = 0.0f;
+  ray_done_counter = 0;
+  ////////////////////////
 
   // set the camera's projection matrix
   flycamera.setPerspectiveMatrix(60.0, width / (float)height, 0.1f, 100.0f);
@@ -11,7 +33,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/dodgeColorTest.obj");
+                                    "resources/models/cube.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -124,8 +146,33 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 }
 
+void printProgress(float percentage) {
+	progress = (float)ray_done_counter / (float)total_num_of_rays;
+	int val = (int)(percentage * 100);
+	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
+	int rpad = PROGRESS_BAR_WIDTH - lpad;
+	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	fflush(stdout);
+}
+
+void progressLoop() {
+	printProgress(progress);
+	while (!done_ray_tracing) {
+		printProgress(progress);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+	printProgress(1.0f);
+}
+
 void Flyscene::raytraceScene(int width, int height) {
   std::cout << "ray tracing ..." << std::endl;
+
+  //////////////////////////
+  done_ray_tracing = false;
+  progress = 0.0f;
+  ray_done_counter = 0;
+  ////////////////////////
+
 
   // if no width or height passed, use dimensions of current viewport
   Eigen::Vector2i image_size(width, height);
@@ -143,6 +190,13 @@ void Flyscene::raytraceScene(int width, int height) {
   Eigen::Vector3f origin = flycamera.getCenter();
   Eigen::Vector3f screen_coords;
 
+
+  total_num_of_rays = image_size[1] * image_size[0];
+
+
+  std::thread progressBarThread(progressLoop);
+
+
   // for every pixel shoot a ray from the origin through the pixel coords
   for (int j = 0; j < image_size[1]; ++j) {
     for (int i = 0; i < image_size[0]; ++i) {
@@ -150,21 +204,92 @@ void Flyscene::raytraceScene(int width, int height) {
       screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
       // launch raytracing for the given ray and write result to pixel data
       pixel_data[i][j] = traceRay(origin, screen_coords);
+	  
+	  //Counter for progress
+	  ray_done_counter++;
     }
   }
+  done_ray_tracing = true;
 
+  progressBarThread.join();
+  std::cout << "" << std::endl;
+  fflush(stdout);
   // write the ray tracing result to a PPM image
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
   std::cout << "ray tracing done! " << std::endl;
 }
 
+Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
+	Eigen::Vector3f& dest) {
+	// just some fake random color per pixel until you implement your ray tracing
+	// remember to return your RGB values as floats in the range [0, 1]!!!
 
-Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &dest) {
-  // just some fake random color per pixel until you implement your ray tracing
-  // remember to return your RGB values as floats in the range [0, 1]!!!
-  return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-                         rand() / (float)RAND_MAX);
+	  std::vector<float> bestIntersection;
+	  bestIntersection.push_back(0.f);
+	  bestIntersection.push_back(-1.f);
+	  bestIntersection.push_back(-1.f);
+	  bestIntersection.push_back(std::numeric_limits<float>::max());
+
+	  int bestIntersectionTriangleIndex = -1;
+	  //Number of faces does not work
+	  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+	  	Eigen::Vector3f direction = dest - origin;
+		Tucano::Face currTriangle = mesh.getFace(i);
+	  	std::vector<float> intersection = rayTriangleIntersect(origin, direction, currTriangle);
+		if (intersection.at(0) != 0.f && intersection.at(3) < bestIntersection.at(3)) {
+			bestIntersection.at(1) = intersection.at(1);
+			bestIntersection.at(2) = intersection.at(2);
+			bestIntersection.at(3) = intersection.at(3);
+			bestIntersectionTriangleIndex = i;
+		}
+	  }
+	  if (bestIntersectionTriangleIndex == -1) {
+		  return BACKGROUND;
+	  }
+	return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
+		rand() / (float)RAND_MAX);
+}
+
+std::vector<float> Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle)
+{
+	std::vector<float> result;
+	Eigen::Vector3f p0 = mesh.getVertex(triangle.vertex_ids[0]).head<3>();
+	Eigen::Vector3f p1 = mesh.getVertex(triangle.vertex_ids[1]).head<3>();
+	Eigen::Vector3f p2 = mesh.getVertex(triangle.vertex_ids[2]).head<3>();
+
+	Eigen::Vector3f edge1 = p1 - p0;
+	Eigen::Vector3f edge2 = p2 - p0;
+
+	Eigen::Vector3f q = direction.cross(edge2);
+	float a = q.dot(edge1);
+
+	if (a > -epsilon && a < epsilon) {
+		result.push_back(0.f);
+		return result;
+	}
+
+	float f = 1 / a;
+	Eigen::Vector3f s = origin - p0;
+	float u = f * s.dot(q);
+
+	if (u < 0.f) {
+		result.push_back(0.f);
+		return result;
+	}
+
+	Eigen::Vector3f r = s.cross(edge1);
+	float v = f * direction.dot(r);
+
+	if (v < 0.f || u + v > 1.f) {
+		result.push_back(0.f);
+		return result;
+	}
+	float t = f * edge2.dot(r);
+	result.push_back(1.f);
+	result.push_back(u);
+	result.push_back(v);
+	result.push_back(t);
+	return result;
 }
 
 Eigen::Vector3f rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {

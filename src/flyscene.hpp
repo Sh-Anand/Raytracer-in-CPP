@@ -69,6 +69,15 @@ public:
    */
   Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
+  /**
+   * @brief check if we intersect the triangle for a given ray
+   * @param origin Ray origin
+   * @param dest Other point on the ray, usually screen coordinates
+   * @param triangle Triangle we are currently investigating
+   * @return a RGB color
+  */
+  std::vector<float> rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
+
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
