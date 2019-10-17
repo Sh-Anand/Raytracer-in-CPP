@@ -1,0 +1,258 @@
+﻿  flyscene.cpp
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(35,1): warning C4005:  'TUCANODEBUG': macro redefinition
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(35,1): warning C4005: C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp: note: see previous definition of 'TUCANODEBUG'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(1824,1): warning C4267:  'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(1832,1): warning C4267:  'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(161,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(160,88): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(165,21): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(194,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(195,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(196,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(265,27): warning C4244:  'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(388,1): warning C4305:  '=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(410,37): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(410,25): warning C4244:  'initializing': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(470,23): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(471,23): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(472,24): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\model.hpp(39,73): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\model.hpp(181,31): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(373,37): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(425,33): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(431,35): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(581,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(621,34): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(623,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(624,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(625,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(642,34): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(652,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(665,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(737,1): warning C4267:  '+=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1031,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1065,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1096,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\mtl.hpp(21,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\mtl.hpp(114,54): warning C4244:  'return': conversion from 'const int' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\phong.hpp(22,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(145,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(146,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(48,70): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(51,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(118,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(233,21): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(236,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(264,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(265,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(268,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(284,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(285,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(288,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(111,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(207,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(124,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(194,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(214,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(215,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(218,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(233,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(236,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:  'argument': conversion from 'size_t' to '_Ty', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         with
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         [
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:             _Ty=GLuint
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         ]
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(259,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(260,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(263,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(58,1): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(70,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(76,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(80,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(81,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(107,1): warning C4305:  '=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(144,1): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(158,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(287,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(288,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(294,1): warning C4305:  '-=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(296,1): warning C4305:  '+=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(298,1): warning C4305:  '-=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(300,1): warning C4305:  '+=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\framebuffer.hpp(920,1): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\ppmIO.hpp(132,31): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\ppmIO.hpp(133,29): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(82,51): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(101,57): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(105,57): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.hpp(96,76): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(29,24): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(35,37): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(38,26): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(67,34): warning C4305:  'argument': truncation from 'double' to 'GLclampf'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(96,12): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(98,12): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+  main.cpp
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.cpp(106,12): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(35,1): warning C4005:  'TUCANODEBUG': macro redefinition
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(35,1): warning C4005: C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\main.cpp: note: see previous definition of 'TUCANODEBUG'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(1824,1): warning C4267:  'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shader.hpp(1832,1): warning C4267:  'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(161,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(160,88): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(165,21): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(194,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(195,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(196,36): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(265,27): warning C4244:  'return': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(388,1): warning C4305:  '=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(410,37): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(410,25): warning C4244:  'initializing': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(470,23): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(471,23): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\camera.hpp(472,24): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\model.hpp(39,73): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\model.hpp(181,31): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(373,37): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(425,33): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(431,35): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(581,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(621,34): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(623,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(624,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(625,23): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(642,34): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(652,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(665,1): warning C4267:  '=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(737,1): warning C4267:  '+=': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1031,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1065,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\mesh.hpp(1096,1): warning C4267:  'argument': conversion from 'size_t' to 'unsigned int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\mtl.hpp(21,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\mtl.hpp(114,54): warning C4244:  'return': conversion from 'const int' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\materials\phong.hpp(22,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(111,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(145,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongmaterialshader.hpp(146,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(48,70): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(51,56): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\effects\phongshader.hpp(153,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,69): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,56): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,43): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\camerarep.hpp(120,30): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(118,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(148,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(233,21): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(236,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(264,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(265,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(268,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(284,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(285,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\cylinder.hpp(288,35): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(111,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(137,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\sphere.hpp(207,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(124,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,63): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,50): warning C4244:  'argument': conversion from 'float' to 'GLsizei', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,37): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(153,24): warning C4244:  'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(194,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(214,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(215,1): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(218,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(233,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(236,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:  'argument': conversion from 'size_t' to '_Ty', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         with
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         [
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:             _Ty=GLuint
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(253,1): warning C4267:         ]
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(259,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(260,1): warning C4267:  '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\arrow.hpp(263,22): warning C4244:  '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(58,1): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(70,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(76,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(80,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\shapes\coordinateaxes.hpp(81,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(107,1): warning C4305:  '=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(144,1): warning C4305:  'argument': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(158,1): warning C4305:  'argument': truncation from 'double' to 'const float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(287,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(288,16): warning C4244:  'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(294,1): warning C4305:  '-=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(296,1): warning C4305:  '+=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(298,1): warning C4305:  '-=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\flycamera.hpp(300,1): warning C4305:  '+=': truncation from 'double' to 'float'
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\framebuffer.hpp(920,1): warning C4267:  'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\ppmIO.hpp(132,31): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\ppmIO.hpp(133,29): warning C4267:  'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(82,51): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(86,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(91,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,91): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,66): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(96,41): warning C4244:  'argument': conversion from 'double' to 'const float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(101,57): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\tucano\tucano\utils\mtlIO.hpp(105,57): warning C4244:  'argument': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\src\flyscene.hpp(96,76): warning C4305:  'argument': truncation from 'double' to 'float'
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  raytracing.vcxproj -> C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\x64\Debug\raytracing.exe
+  C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\glfw\bin\win\x64\glfw3.dll
+  1 File(s) copied
+  C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\dependencies\glew\bin\win\x64\glew32.dll
+  1 File(s) copied
