@@ -33,3 +33,7 @@
 
 #VS Specific
 .vs
+
+#Debug builds
+out/build/*
+x64/
