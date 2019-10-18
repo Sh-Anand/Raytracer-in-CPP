@@ -56,6 +56,8 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+  void createHitPoint(Eigen::Vector3f point);
+
   /**
    * @brief raytrace your scene from current camera position   
    */
@@ -84,6 +86,10 @@ public:
   Eigen::Vector4f rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
 
 private:
+	
+  /// A small debug sphere to see where ray intersects
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.1);
+
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
 
