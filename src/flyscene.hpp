@@ -15,7 +15,7 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
-
+#include <thread>
 class Flyscene {
 
 public:
@@ -61,6 +61,11 @@ public:
    */
   void raytraceScene(int width = 0, int height = 0);
 
+  void draw(int start, int end, int width, Eigen::Vector3f origin);
+
+  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
+	  return std::thread([=] { draw(start, end, width, origin); });
+  }
   /**
    * @brief trace a single ray from the camera passing through dest
    * @param origin Ray origin
@@ -76,7 +81,7 @@ public:
    * @param triangle Triangle we are currently investigating
    * @return a RGB color
   */
-  std::vector<float> rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
+  Eigen::Vector4f rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
 
 private:
   // A simple phong shader for rendering meshes

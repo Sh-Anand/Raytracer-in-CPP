@@ -36,3 +36,9 @@
 
 #folders
 x64/
+
+#pdf
+.pdf
+
+#images
+.ppm
