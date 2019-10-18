@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include<iostream>
 #include <thread>
+#include <mutex>
 #include <chrono>
 #include <ctime>
 
@@ -15,7 +16,8 @@ float progress;
 float total_num_of_rays;
 unsigned int ray_done_counter;
 bool done_ray_tracing;
-
+vector<vector<Eigen::Vector3f>> pixel_data;
+std::mutex mtx;           // mutex for critical section
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -143,7 +145,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   camerarep.resetModelMatrix();
   camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 
-
   //Try to intersect the triangle to see where to stop drawing the ray
   Eigen::Vector4f bestIntersection = 
 	  Eigen::Vector4f(0.f, -1.f, -1.f, std::numeric_limits<float>::max());
@@ -160,7 +161,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
 	  ray.setSize(0.005, abs(bestIntersection.w()));
   }
   else {
-	  ray.setSize(0.005, 10.0);
+	  ray.setSize(0.005, std::numeric_limits<float>::max());
   }
 }
 
@@ -199,7 +200,7 @@ void Flyscene::raytraceScene(int width, int height) {
   }
 
   // create 2d vector to hold pixel colors and resize to match image size
-  vector<vector<Eigen::Vector3f>> pixel_data;
+  //vector<vector<Eigen::Vector3f>> pixel_data;
   pixel_data.resize(image_size[1]);
   for (int i = 0; i < image_size[1]; ++i)
     pixel_data[i].resize(image_size[0]);
@@ -208,7 +209,6 @@ void Flyscene::raytraceScene(int width, int height) {
   Eigen::Vector3f origin = flycamera.getCenter();
   Eigen::Vector3f screen_coords;
 
-
   total_num_of_rays = (float) (image_size[1] * image_size[0]);
 
 
@@ -216,27 +216,57 @@ void Flyscene::raytraceScene(int width, int height) {
 
 
   // for every pixel shoot a ray from the origin through the pixel coords
-  for (int j = 0; j < image_size[1]; ++j) {
-    for (int i = 0; i < image_size[0]; ++i) {
-      // create a ray from the camera passing through the pixel (i,j)
-      screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
-      // launch raytracing for the given ray and write result to pixel data
-      pixel_data[i][j] = traceRay(origin, screen_coords);
-	  
-	  //Counter for progress
-	  ray_done_counter++;
-    }
-  }
+  //for (int j = 0; j < image_size[1]; ++j) {
+  //  for (int i = 0; i < image_size[0]; ++i) {
+  //    // create a ray from the camera passing through the pixel (i,j)
+  //    screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
+  //    // launch raytracing for the given ray and write result to pixel data
+  //    pixel_data[i][j] = traceRay(origin, screen_coords);
+	 // 
+	 // //Counter for progress
+	 // ray_done_counter++;
+  //  }
+  //}
+  int third = (int)(image_size[1] / 3);
+  std::thread draw1Thread = createDrawThread(0, third, image_size[0], origin);
+  std::thread draw2Thread = createDrawThread(third, 2 * third, image_size[0], origin);
+  std::thread draw3Thread = createDrawThread(2 * third, image_size[1], image_size[0], origin);
 
+  draw1Thread.join();
+  draw2Thread.join();
+  draw3Thread.join();
+  //draw(0, image_size[1], image_size[0], origin);
+
+  done_ray_tracing = true;
+
+  progressBarThread.join();
 
   std::cout << "" << std::endl;
   fflush(stdout);
   // write the ray tracing result to a PPM image
+
+  std::cout << "writing to ppm file ..." << std::endl;
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
   std::cout << "ray tracing done! " << std::endl;
-  done_ray_tracing = true;
-  progressBarThread.join();
 }
+
+void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
+	for (int j = start; j < end; ++j) {
+		for (int i = 0; i < width; ++i) {
+			// create a ray from the camera passing through the pixel (i,j)
+			Eigen::Vector3f screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
+			// launch raytracing for the given ray and write result to pixel data
+			Eigen::Vector3f col = traceRay(origin, screen_coords);
+			
+			pixel_data[i][j] = col;
+			//Counter for progress
+			mtx.lock();
+			ray_done_counter++;
+			mtx.unlock();
+		}
+	}
+}
+
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	Eigen::Vector3f& dest) {
@@ -262,7 +292,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	  }
 
 	  Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
-	  return mat.getAmbient() + mat.getDiffuse() + mat.getSpecular();
+	  return mat.getAmbient() + mat.getDiffuse();// +mat.getSpecular();
 	//return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
 		//rand() / (float)RAND_MAX);
 
@@ -275,9 +305,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 Eigen::Vector4f Flyscene::rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle)
 {
 	Eigen::Vector4f result = Eigen::Vector4f(0.f, 0.f, 0.f, 0.f);
-	Eigen::Vector3f p0 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>(); //mesh.getVertex(triangle.vertex_ids[0]).head<3>()
-	Eigen::Vector3f p1 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>();
-	Eigen::Vector3f p2 = (mesh.getModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>();
+	Eigen::Vector3f p0 = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>(); //mesh.getVertex(triangle.vertex_ids[0]).head<3>()
+	Eigen::Vector3f p1 = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>();
+	Eigen::Vector3f p2 = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>();
 
 	Eigen::Vector3f edge1 = p1 - p0;
 	Eigen::Vector3f edge2 = p2 - p0;
