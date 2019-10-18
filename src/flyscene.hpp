@@ -44,11 +44,13 @@ public:
    **/
   Tucano::Flycamera *getCamera(void) { return &flycamera; }
 
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.05);
   /**
    * @brief Add a new light source
    */
   void addLight(void) { lights.push_back(flycamera.getCenter()); }
 
+  void createHitPoint(Eigen::Vector3f point);
   /**
    * @brief Create a debug ray at the current camera location and passing
    * through pixel that mouse is over
