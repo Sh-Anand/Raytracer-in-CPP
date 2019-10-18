@@ -167,17 +167,40 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                          rand() / (float)RAND_MAX);
 }
 
-Eigen::Vector3f rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
-
+// Returns parameter t of r = o + td   of the ray that intersects the plane
+float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
+	if (rayDirection.dot(planeNormal) == 0) {
+		return	std::numeric_limits<float>::max();
+	}
+	
+	float t = (planeNormal.dot(planePoint) - rayPoint.dot(planeNormal))/rayDirection.dot(planeNormal);
+	return t;
 }
 
 bool rayTriangleIntersection(Eigen::Vector3f &rayPoint, Eigen::Vector3f &rayDirection, Tucano::Face &triangle, Tucano::Mesh &mesh) {
-	Eigen::Vector3f vertices[3] = { mesh.getVertex(triangle.vertex_ids[0]) , mesh.getVertex(triangle.vertex_ids[1]), mesh.getVertex(triangle.vertex_ids[2]) };
+	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix()*mesh.getVertex(triangle.vertex_ids[0])).head<3>() , (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>(), (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() };
 	Eigen::Vector3f triangleNormal = triangle.normal;
 
 	if (rayDirection.dot(triangleNormal) == 0) {
 		return false;
 	}
 
-	Eigen::Vector3f intersection = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
+	float t = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
+	Eigen::Vector3f planeIntersection = rayPoint + (t * rayDirection);
+	Eigen::Vector3f v0 = vertices[2] - vertices[0];
+	Eigen::Vector3f v1 = vertices[1] - vertices[0];
+	Eigen::Vector3f v2 = planeIntersection - vertices[0];
+
+	float d00 = v0.dot(v0);
+	float d01 = v0.dot(v1);
+	float d11 = v1.dot(v1);
+	float d02 = v0.dot(v2);
+	float d12 = v1.dot(v2);
+
+	float invDenom = 1 / (d00 * d11 - d01 * d01);
+	float u = (d11 * d02 - d01 * d12) * invDenom;
+	float v = (d00 * d12 - d01 * d02) * invDenom;
+
+	return (u >= 0) && (v >= 0) && (u + v < 1);
+
 }
