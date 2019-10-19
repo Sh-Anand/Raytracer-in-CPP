@@ -1,5 +1,6 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+#define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -11,7 +12,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/dodgeColorTest.obj");
+                                    "resources/models/cube.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -198,8 +199,32 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
   
-  return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-                         rand() / (float)RAND_MAX);
+
+	Eigen::Vector3f direction = dest - origin;
+
+	int bestIntersectionTriangleIndex = -1;
+	vector<float> intersection;
+	//Store the best intersection (triangle closest to the camera)
+	float t = std::numeric_limits<float>::max();
+
+	//Loop through all of the faces
+	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		//get a direction vector
+		Tucano::Face currTriangle = mesh.getFace(i);
+		intersection = rayTriangleIntersection(origin, direction, currTriangle);
+		if (intersection.at(0) && intersection.at(1) < t) {
+			t = intersection.at(1);
+			bestIntersectionTriangleIndex = i;
+		}
+	}
+	if (bestIntersectionTriangleIndex == -1) {
+		return BACKGROUND;
+	}
+
+	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
+
+
+	return mat.getAmbient();
 }
 
 
