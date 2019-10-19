@@ -60,6 +60,7 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+
   /**
    * @brief raytrace your scene from current camera position   
    */

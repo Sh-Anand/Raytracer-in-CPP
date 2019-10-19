@@ -202,7 +202,6 @@ void progressLoop() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 	printProgress(1.0f);
-	endTime = clock();
 }
 
 void Flyscene::raytraceScene(int width, int height) {
@@ -257,7 +256,7 @@ void Flyscene::raytraceScene(int width, int height) {
   draw6Thread.join();
   draw7Thread.join();
 
-
+  endTime = clock();
   done_ray_tracing = true;
 
   progressBarThread.join();
@@ -268,7 +267,7 @@ void Flyscene::raytraceScene(int width, int height) {
 
   std::cout << "writing to ppm file ..." << std::endl;
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
-  std::cout << "ray tracing done! Time taken : " << (endTime -startTime) << " seconds"<< std::endl;
+  std::cout << "ray tracing done! Time taken : " << (endTime -startTime) / CLOCKS_PER_SEC << " seconds"<< std::endl;
 }
 
 
@@ -283,12 +282,12 @@ void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
 			Eigen::Vector3f screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
 			// launch raytracing for the given ray and write result to pixel data
 			Eigen::Vector3f col = traceRay(origin, screen_coords);
-			
-			pixel_data[i][j] = col;
 			//Counter for progress which is critical section as it can 
 			//be overwritten by other threads which are trying to increment 
-			//the same number
+			//the same number and so is pixel_data unsafe (so we make sure for other
+			//threads to wait)
 			mtx.lock();
+			pixel_data[i][j] = col;
 			ray_done_counter++;
 			mtx.unlock();
 		}
