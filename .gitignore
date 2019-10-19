@@ -34,5 +34,11 @@
 #VS Specific
 .vs
 
-#Machine Specific
-x64
+#folders
+x64/
+
+#pdf
+.pdf
+
+#images
+.ppm

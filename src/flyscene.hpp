@@ -15,7 +15,7 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
-
+#include <thread>
 class Flyscene {
 
 public:
@@ -63,11 +63,18 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+  void createHitPoint(Eigen::Vector3f point);
+
   /**
    * @brief raytrace your scene from current camera position   
    */
   void raytraceScene(int width = 0, int height = 0);
 
+  void draw(int start, int end, int width, Eigen::Vector3f origin);
+
+  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
+	  return std::thread([=] { draw(start, end, width, origin); });
+  }
   /**
   * @brief returns paramater t of the ray at point of intersection with the plane, returns floatmax if no intersection.
   */
@@ -84,7 +91,20 @@ public:
    */
   Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
+  /**
+   * @brief check if we intersect the triangle for a given ray
+   * @param origin Ray origin
+   * @param dest Other point on the ray, usually screen coordinates
+   * @param triangle Triangle we are currently investigating
+   * @return a RGB color
+  */
+  Eigen::Vector4f rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
+
 private:
+	
+  /// A small debug sphere to see where ray intersects
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.1);
+
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
 
