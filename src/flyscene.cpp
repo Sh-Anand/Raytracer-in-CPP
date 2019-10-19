@@ -111,6 +111,7 @@ void Flyscene::simulate(GLFWwindow *window) {
   flycamera.translate(dx, dy, dz);
 }
 
+// Creates (technically translates) a sphere at the point provided.
 void Flyscene::createHitPoint(Eigen::Vector3f point) {
 	hitCircle.resetModelMatrix();
 	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
