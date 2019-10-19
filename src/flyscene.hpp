@@ -69,9 +69,16 @@ public:
    */
   Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
+  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
+
+  vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+  void createHitPoint(Eigen::Vector3f point);
+
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
+
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
 
   // A fly through camera
   Tucano::Flycamera flycamera;
