@@ -3,7 +3,6 @@
 #include<iostream>
 #include <thread>
 #include <mutex>
-#include <chrono>
 #include <ctime>
 
 #define epsilon 0.00001f
@@ -18,6 +17,8 @@ unsigned int ray_done_counter;
 bool done_ray_tracing;
 vector<vector<Eigen::Vector3f>> pixel_data;
 std::mutex mtx;           // mutex for critical section
+clock_t startTime;
+clock_t endTime;
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -189,7 +190,8 @@ void printProgress(float percentage) {
 	int val = (int)(percentage * 100);
 	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
 	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	int secondsPassed = (int) (clock() - startTime) / CLOCKS_PER_SEC;
+	printf("\r%3d%% [%.*s%*s] %4d seconds passed", val, lpad, PROGRESS_BAR_STR, rpad, "", secondsPassed);
 	fflush(stdout);
 }
 
@@ -200,12 +202,14 @@ void progressLoop() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 	printProgress(1.0f);
+	endTime = clock();
 }
 
 void Flyscene::raytraceScene(int width, int height) {
   std::cout << "ray tracing ..." << std::endl;
 
   //////////////////////////
+  //Set up for progress bar
   done_ray_tracing = false;
   progress = 0.0f;
   ray_done_counter = 0;
@@ -228,33 +232,31 @@ void Flyscene::raytraceScene(int width, int height) {
   Eigen::Vector3f origin = flycamera.getCenter();
   Eigen::Vector3f screen_coords;
 
+  //calculate the numbe rof iterations we make to generate an image
   total_num_of_rays = (float) (image_size[1] * image_size[0]);
-
-
+  startTime = clock();
+  //start a progress bar thread
   std::thread progressBarThread(progressLoop);
 
+  //Divide up pixel regions for the draw method and create threads that will write to pixel_data
+  int seventh = (int)(image_size[1] / 7);
+  std::thread draw1Thread = createDrawThread(0, seventh, image_size[0], origin);
+  std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, image_size[0], origin);
+  std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, image_size[0], origin);
+  std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, image_size[0], origin);
+  std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, image_size[0], origin);
+  std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, image_size[0], origin);
+  std::thread draw7Thread = createDrawThread(6 * seventh, image_size[1], image_size[0], origin);
 
-  // for every pixel shoot a ray from the origin through the pixel coords
-  //for (int j = 0; j < image_size[1]; ++j) {
-  //  for (int i = 0; i < image_size[0]; ++i) {
-  //    // create a ray from the camera passing through the pixel (i,j)
-  //    screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
-  //    // launch raytracing for the given ray and write result to pixel data
-  //    pixel_data[i][j] = traceRay(origin, screen_coords);
-	 // 
-	 // //Counter for progress
-	 // ray_done_counter++;
-  //  }
-  //}
-  int third = (int)(image_size[1] / 3);
-  std::thread draw1Thread = createDrawThread(0, third, image_size[0], origin);
-  std::thread draw2Thread = createDrawThread(third, 2 * third, image_size[0], origin);
-  std::thread draw3Thread = createDrawThread(2 * third, image_size[1], image_size[0], origin);
-
+  //Join all of the threads and determine when you are done
   draw1Thread.join();
   draw2Thread.join();
   draw3Thread.join();
-  //draw(0, image_size[1], image_size[0], origin);
+  draw4Thread.join();
+  draw5Thread.join();
+  draw6Thread.join();
+  draw7Thread.join();
+
 
   done_ray_tracing = true;
 
@@ -266,9 +268,14 @@ void Flyscene::raytraceScene(int width, int height) {
 
   std::cout << "writing to ppm file ..." << std::endl;
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
-  std::cout << "ray tracing done! " << std::endl;
+  std::cout << "ray tracing done! Time taken : " << (endTime -startTime) << " seconds"<< std::endl;
 }
 
+
+/**
+A draw method that uses traceRay function in order ray trace pixels in parallel. pixel_data is saved
+a global variable taht holds values for each pixel's color.
+*/
 void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
 	for (int j = start; j < end; ++j) {
 		for (int i = 0; i < width; ++i) {
@@ -278,7 +285,9 @@ void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
 			Eigen::Vector3f col = traceRay(origin, screen_coords);
 			
 			pixel_data[i][j] = col;
-			//Counter for progress
+			//Counter for progress which is critical section as it can 
+			//be overwritten by other threads which are trying to increment 
+			//the same number
 			mtx.lock();
 			ray_done_counter++;
 			mtx.unlock();
@@ -311,10 +320,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	  }
 
 	  Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
+	  
 	  return mat.getAmbient() + mat.getDiffuse();// +mat.getSpecular();
-	//return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-		//rand() / (float)RAND_MAX);
-
 }
 
 
@@ -366,5 +373,4 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 
 	result.push_back(t);
 	return result;
-
 }
