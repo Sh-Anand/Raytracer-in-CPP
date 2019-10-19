@@ -338,7 +338,7 @@ float Flyscene::rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f&
 	return t;
 }
 
-//Returns a vector with [0] - 0 or 1 for intersection or not, [1] - t value of light ray to compare distance 
+//Returns a vector with [0] - 1 or 0 meaning: intersection or not. [1] - t: value of light ray to compare distance 
 vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
 	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
 		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
@@ -393,3 +393,4 @@ Eigen::Vector3f Flyscene::phongShade(Tucano::Face& triangle) {
 
 	return ambient + diffuse;
 }
+
