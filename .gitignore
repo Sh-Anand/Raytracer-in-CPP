@@ -38,7 +38,7 @@
 x64/
 
 #pdf
-.pdf
+*.pdf
 
 #images
-.ppm
+*.ppm
