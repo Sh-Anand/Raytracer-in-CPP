@@ -110,50 +110,7 @@ void Flyscene::simulate(GLFWwindow *window) {
   flycamera.translate(dx, dy, dz);
 }
 
-// Returns parameter t of r = o + td   of the ray that intersects the plane
-float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
-	if (rayDirection.dot(planeNormal) == 0) {
-		return	std::numeric_limits<float>::max();
-	}
 
-	float t = (planeNormal.dot(planePoint) - rayPoint.dot(planeNormal)) / rayDirection.dot(planeNormal);
-	return t;
-}
-
-bool rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle, Tucano::Mesh& mesh) {
-	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() , 
-		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(), 
-		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>() };
-	Eigen::Vector3f triangleNormal = triangle.normal;
-
-	if (rayDirection.dot(triangleNormal) == 0) {
-		return false;
-	}
-
-	float t = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
-	Eigen::Vector3f planeIntersection = rayPoint + (t * rayDirection);
-	Eigen::Vector3f v0 = vertices[2] - vertices[0];
-	Eigen::Vector3f v1 = vertices[1] - vertices[0];
-	Eigen::Vector3f v2 = planeIntersection - vertices[0];
-
-	float d00 = v0.dot(v0);
-	float d01 = v0.dot(v1);
-	float d11 = v1.dot(v1);
-	float d02 = v0.dot(v2);
-	float d12 = v1.dot(v2);
-
-	float invDenom = 1 / (d00 * d11 - d01 * d01);
-	float u = (d11 * d02 - d01 * d12) * invDenom;
-	float v = (d00 * d12 - d01 * d02) * invDenom;
-
-	return (u >= 0) && (v >= 0) && (u + v < 1);
-
-}
-
-float triangleDistance(Tucano::Face triangle, Eigen::Vector3f origin, Tucano::Mesh& mesh) {
-	Eigen::Vector3f vertex = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
-	return (vertex - origin).norm();
-}
 
 void Flyscene::createHitPoint(Eigen::Vector3f point) {
 	hitCircle.resetModelMatrix();
@@ -175,26 +132,27 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   // place the camera representation (frustum) on current camera location, 
   camerarep.resetModelMatrix();
   camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+  vector<float> intersection;
 
   bool intersected = false;
-  Tucano::Face inter = mesh.getFace(0);
+  float t = std::numeric_limits<float>::max();
   for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 	  Tucano::Face currTriangle = mesh.getFace(i);
-	  bool intersection =
-		  rayTriangleIntersection(screen_pos, dir, currTriangle, mesh);
-	  if (intersection) {
+	  intersection =
+		  rayTriangleIntersection(screen_pos, dir, currTriangle);
+	  if (intersection.at(0)) {
 		  intersected = true;
-		  if (triangleDistance(currTriangle, flycamera.getCenter(), mesh) < triangleDistance(inter, flycamera.getCenter(), mesh)) {
-			  inter = currTriangle;
+		  if (intersection.at(1) < t) {
+			  t = intersection.at(1);
 		  }
 	  }
   }
 
   if (intersected) {
-	  Eigen::Vector3f p0 = (mesh.getShapeModelMatrix() * mesh.getVertex(inter.vertex_ids[0])).head<3>();
+	  Eigen::Vector3f p0 = screen_pos + (t * dir);
 	  createHitPoint(p0);
-	  std::cout << p0 << std::endl;
   }
+
   else {
 	  ray.setSize(0.005, std::numeric_limits<float>::max());
   }
@@ -244,6 +202,55 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 }
 
 
+// Returns parameter t of r = o + td   of the ray that intersects the plane
+float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
+	if (rayDirection.dot(planeNormal) == 0) {
+		return	std::numeric_limits<float>::max();
+	}
+
+	float t = (planeNormal.dot(planePoint) - rayPoint.dot(planeNormal)) / rayDirection.dot(planeNormal);
+	return t;
+}
+
+//Returns a vector with [0] - 0 or 1 for intersection or not, [1] - t value of light ray to compare distance 
+vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
+	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
+		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
+		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>() };
+	Eigen::Vector3f triangleNormal = triangle.normal;
+	vector<float> result;
+	if (rayDirection.dot(triangleNormal) == 0) {
+		result.push_back(0);
+		return result;
+	}
+
+	float t = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
+	Eigen::Vector3f planeIntersection = rayPoint + (t * rayDirection);
+	Eigen::Vector3f v0 = vertices[2] - vertices[0];
+	Eigen::Vector3f v1 = vertices[1] - vertices[0];
+	Eigen::Vector3f v2 = planeIntersection - vertices[0];
+
+	float d00 = v0.dot(v0);
+	float d01 = v0.dot(v1);
+	float d11 = v1.dot(v1);
+	float d02 = v0.dot(v2);
+	float d12 = v1.dot(v2);
+
+	float invDenom = 1 / (d00 * d11 - d01 * d01);
+	float u = (d11 * d02 - d01 * d12) * invDenom;
+	float v = (d00 * d12 - d01 * d02) * invDenom;
+
+	if ((u >= 0) && (v >= 0) && (u + v < 1)) {
+		result.push_back(1);
+	}
+	else {
+		result.push_back(0);
+	}
+
+	result.push_back(t);
+	return result;
+
+}
 
 
 
