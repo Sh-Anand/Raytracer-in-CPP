@@ -15,6 +15,7 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
+#include <thread>
 
 class Flyscene {
 
@@ -67,12 +68,23 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
 
-  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
+  float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
-  void createHitPoint(Eigen::Vector3f point);
+
+  void createHitPoint(Eigen::Vector3f& point);
+
+  Eigen::Vector3f phongShade(Tucano::Face& triangle);
+
+  void draw(int start, int end, int width, Eigen::Vector3f origin, vector<vector<Eigen::Vector3f>> pixel_data);
+
+  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f& origin, vector<vector<Eigen::Vector3f>>& pixel_data) {
+	  return std::thread([=] { draw(start, end, width, origin, pixel_data); });
+  }
+
+  
 
 private:
   // A simple phong shader for rendering meshes
