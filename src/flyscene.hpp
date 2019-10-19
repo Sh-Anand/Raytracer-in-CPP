@@ -43,10 +43,7 @@ public:
    * @return pointer to flycamera
    **/
   Tucano::Flycamera *getCamera(void) { return &flycamera; }
-  /**
-  * A sphere to be drawn for debugging
-  */
-  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.01);
+
   /**
    * @brief Add a new light source
    */
@@ -62,8 +59,6 @@ public:
    * @param mouse_pos Mouse cursor position in pixels
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
-
-  void createHitPoint(Eigen::Vector3f point);
 
   /**
    * @brief raytrace your scene from current camera position   
@@ -91,19 +86,11 @@ public:
    */
   Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
-  /**
-   * @brief check if we intersect the triangle for a given ray
-   * @param origin Ray origin
-   * @param dest Other point on the ray, usually screen coordinates
-   * @param triangle Triangle we are currently investigating
-   * @return a RGB color
-  */
-  Eigen::Vector4f rayTriangleIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& direction, Tucano::Face& triangle);
 
 private:
 	
   /// A small debug sphere to see where ray intersects
-  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.1);
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
 
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;

@@ -298,21 +298,23 @@ void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	Eigen::Vector3f& dest) {
-	// just some fake random color per pixel until you implement your ray tracing
 	// remember to return your RGB values as floats in the range [0, 1]!!!
 		
-	  //Store the best intersection (triangle closest to the camera) and the index of the triangle
-	  Eigen::Vector4f bestIntersection = Eigen::Vector4f(0.f, -1.f, -1.f, std::numeric_limits<float>::max());
-	  int bestIntersectionTriangleIndex = -1;
 	  Eigen::Vector3f direction = dest - origin;
+
+	  int bestIntersectionTriangleIndex = -1;
+	  vector<float> intersection;
+	  //Store the best intersection (triangle closest to the camera)
+	  float t = std::numeric_limits<float>::max();
+	 
 	  //Loop through all of the faces
 	  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 		//get a direction vector
 		Tucano::Face currTriangle = mesh.getFace(i);
-		Eigen::Vector4f intersection = rayTriangleIntersect(origin, direction, currTriangle);
-		if (intersection.x() != 0.f && intersection.w() < bestIntersection.w()) {
-			bestIntersection = intersection;
-			bestIntersectionTriangleIndex = i;
+		intersection = rayTriangleIntersection(origin, direction, currTriangle);
+		if (intersection.at(0) && intersection.at(1) < t) {
+				t = intersection.at(1);
+				bestIntersectionTriangleIndex = i;
 		}
 	  }
 	  if (bestIntersectionTriangleIndex == -1) {
@@ -321,7 +323,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 
 	  Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
 	  
-	  return mat.getAmbient() + mat.getDiffuse();// +mat.getSpecular();
+	  
+	  return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
+		  rand() / (float)RAND_MAX);// +mat.getSpecular();
 }
 
 
