@@ -383,8 +383,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	  Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
 	  
 	  
-	  return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-		  rand() / (float)RAND_MAX);// +mat.getSpecular();
+	  return  mat.getAmbient() + mat.getDiffuse();// +mat.getSpecular();
 }
 
 
