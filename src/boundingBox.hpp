@@ -7,12 +7,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-class box
+class boundingBox
 {
 private: Eigen::Vector3f bounds[2];
 
 public:
-	box(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax);
+	boundingBox(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax);
 
 	bool boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
 };

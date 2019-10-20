@@ -1,17 +1,19 @@
-#include "box.hpp"
+#include "boundingBox.hpp"
 // Must be included before glfw.
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 
-	box::box(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax)
+	boundingBox::boundingBox(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax)
 	{
 		bounds[0] = vmin;
 		bounds[1] = vmax;
 	}
 
-	bool box::boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dir)
+	bool boundingBox::boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest)
 	{
+		//Calculate direction
+		Eigen::Vector3f dir = dest - origin;
 		//Get the bounds of the box
 		Eigen::Vector3f vmin = bounds[0];
 		Eigen::Vector3f vmax = bounds[1];
