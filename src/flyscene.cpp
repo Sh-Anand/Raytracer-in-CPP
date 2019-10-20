@@ -1,5 +1,6 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+#define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -11,7 +12,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/dodgeColorTest.obj");
+                                    "resources/models/cube.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -71,6 +72,8 @@ void Flyscene::paintGL(void) {
   scene_light.resetViewMatrix();
   scene_light.viewMatrix()->translate(-lights.back());
 
+  hitCircle.render(flycamera, scene_light);
+
   // render the scene using OpenGL and one light source
   phong.render(mesh, flycamera, scene_light);
 
@@ -108,20 +111,53 @@ void Flyscene::simulate(GLFWwindow *window) {
   flycamera.translate(dx, dy, dz);
 }
 
-void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
-  ray.resetModelMatrix();
-  // from pixel position to world coordinates
-  Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
+// Creates (technically translates) a sphere at the point provided.
+void Flyscene::createHitPoint(Eigen::Vector3f point) {
+	hitCircle.resetModelMatrix();
+	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
+	modelMatrix.translate(point);
+	hitCircle.setModelMatrix(modelMatrix);
+}
 
-  // direction from camera center to click position
-  Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
-  
-  // position and orient the cylinder representing the ray
-  ray.setOriginOrientation(flycamera.getCenter(), dir);
+void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
+	ray.resetModelMatrix();
 
-  // place the camera representation (frustum) on current camera location, 
-  camerarep.resetModelMatrix();
-  camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+	std::cout << "DEBUG: " << flycamera.getViewportSize();
+	// from pixel position to world coordinates
+	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
+	// direction from camera center to click position
+	Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
+	// position and orient the cylinder representing the ray
+	ray.setOriginOrientation(flycamera.getCenter(), dir);
+
+	// place the camera representation (frustum) on current camera location, 
+	camerarep.resetModelMatrix();
+	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+
+	vector<float> intersection;
+
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		Tucano::Face currTriangle = mesh.getFace(i);
+		intersection =
+			rayTriangleIntersection(screen_pos, dir, currTriangle);
+		if (intersection.at(0)) {
+			intersected = true;
+			if (intersection.at(1) < t) {
+				t = intersection.at(1);
+			}
+		}
+	}
+
+	if (intersected) {
+		Eigen::Vector3f p0 = screen_pos + (t * dir);
+		createHitPoint(p0);
+	}
+
+	else {
+		ray.setSize(0.005, std::numeric_limits<float>::max());
+	}
 }
 
 void Flyscene::raytraceScene(int width, int height) {
@@ -163,6 +199,82 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
-  return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
-                         rand() / (float)RAND_MAX);
+  
+
+	Eigen::Vector3f direction = dest - origin;
+
+	int bestIntersectionTriangleIndex = -1;
+	vector<float> intersection;
+	//Store the best intersection (triangle closest to the camera)
+	float t = std::numeric_limits<float>::max();
+
+	//Loop through all of the faces
+	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		//get a direction vector
+		Tucano::Face currTriangle = mesh.getFace(i);
+		intersection = rayTriangleIntersection(origin, direction, currTriangle);
+		if (intersection.at(0) && intersection.at(1) < t) {
+			t = intersection.at(1);
+			bestIntersectionTriangleIndex = i;
+		}
+	}
+	if (bestIntersectionTriangleIndex == -1) {
+		return BACKGROUND;
+	}
+
+	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
+
+
+	return mat.getAmbient();
+}
+
+
+// Returns parameter t of r = o + td   of the ray that intersects the plane
+float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
+	if (rayDirection.dot(planeNormal) == 0) {
+		return	std::numeric_limits<float>::max();
+	}
+
+	float t = (planeNormal.dot(planePoint) - rayPoint.dot(planeNormal)) / rayDirection.dot(planeNormal);
+	return t;
+}
+
+//Returns a vector with [0] - 1 or 0 meaning: intersection or not. [1] - t: value of light ray to compare distance 
+vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
+	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
+		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
+		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>() };
+
+	Eigen::Vector3f triangleNormal = triangle.normal;
+	vector<float> result;
+	if (rayDirection.dot(triangleNormal) == 0) {
+		result.push_back(0);
+		return result;
+	}
+
+	float t = rayPlaneIntersection(rayPoint, rayDirection, triangleNormal, vertices[0]);
+	Eigen::Vector3f planeIntersection = rayPoint + (t * rayDirection);
+	Eigen::Vector3f v0 = vertices[2] - vertices[0];
+	Eigen::Vector3f v1 = vertices[1] - vertices[0];
+	Eigen::Vector3f v2 = planeIntersection - vertices[0];
+
+	float d00 = v0.dot(v0);
+	float d01 = v0.dot(v1);
+	float d11 = v1.dot(v1);
+	float d02 = v0.dot(v2);
+	float d12 = v1.dot(v2);
+
+	float invDenom = 1 / (d00 * d11 - d01 * d01);
+	float u = (d11 * d02 - d01 * d12) * invDenom;
+	float v = (d00 * d12 - d01 * d02) * invDenom;
+
+	if ((u >= 0) && (v >= 0) && (u + v < 1)) {
+		result.push_back(1);
+	}
+	else {
+		result.push_back(0);
+	}
+
+	result.push_back(t);
+	return result;
 }
