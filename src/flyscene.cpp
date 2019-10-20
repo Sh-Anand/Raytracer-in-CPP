@@ -203,9 +203,8 @@ void progressLoop() {
 	endTime = clock();
 }
 
-void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin, vector<vector<Eigen::Vector3f>> pixel_data) {
-	// for every pixel shoot a ray from the origin through the pixel coords
-	for (int j = 0; j < end; ++j) {
+void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
+	for (int j = start; j < end; ++j) {
 		for (int i = 0; i < width; ++i) {
 			// create a ray from the camera passing through the pixel (i,j)
 			Eigen::Vector3f screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
@@ -213,7 +212,7 @@ void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin, vecto
 			Eigen::Vector3f col = traceRay(origin, screen_coords);
 			// launch raytracing for the given ray and write result to pixel data
 			pixel_data[i][j] = traceRay(origin, screen_coords);
-
+			//index++;
 			//Counter for progress which is critical section as it can 
 			//be overwritten by other threads which are trying to increment 
 			//the same number
@@ -243,7 +242,7 @@ void Flyscene::raytraceScene(int width, int height) {
 	}
 
 	// create 2d vector to hold pixel colors and resize to match image size
-	vector<vector<Eigen::Vector3f>> pixel_data;
+	//vector<vector<Eigen::Vector3f>> pixel_data;
 	pixel_data.resize(image_size[1]);
 	for (int i = 0; i < image_size[1]; ++i)
 		pixel_data[i].resize(image_size[0]);
@@ -261,13 +260,14 @@ void Flyscene::raytraceScene(int width, int height) {
 
 	//Divide up pixel regions for the draw method and create threads that will write to pixel_data
 	int seventh = (int)(image_size[1] / 7);
-	std::thread draw1Thread = createDrawThread(0, seventh, image_size[0], origin, pixel_data);
-	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, image_size[0], origin, pixel_data);
-	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, image_size[0], origin, pixel_data);
-	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, image_size[0], origin, pixel_data);
-	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, image_size[0], origin, pixel_data);
-	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, image_size[0], origin, pixel_data);
-	std::thread draw7Thread = createDrawThread(6 * seventh, image_size[1], image_size[0], origin, pixel_data);
+
+	std::thread draw1Thread = createDrawThread(0, seventh, image_size[0], origin);
+	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, image_size[0], origin);
+	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, image_size[0], origin);
+	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, image_size[0], origin);
+	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, image_size[0], origin);
+	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, image_size[0], origin);
+	std::thread draw7Thread = createDrawThread(6 * seventh, image_size[1], image_size[0], origin);
 
 	//Join all of the threads and determine when you are done
 	draw1Thread.join();

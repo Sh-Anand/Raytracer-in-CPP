@@ -78,10 +78,10 @@ public:
 
   Eigen::Vector3f phongShade(Tucano::Face& triangle);
 
-  void draw(int start, int end, int width, Eigen::Vector3f origin, vector<vector<Eigen::Vector3f>> pixel_data);
+  void draw(int start, int end, int width, Eigen::Vector3f origin);
 
-  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f& origin, vector<vector<Eigen::Vector3f>>& pixel_data) {
-	  return std::thread([=] { draw(start, end, width, origin, pixel_data); });
+  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f& origin) {
+	  return std::thread([=] { draw(start, end, width, origin); });
   }
 
   
@@ -119,6 +119,8 @@ private:
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+
+  vector<vector<Eigen::Vector3f>> pixel_data;
 };
 
 #endif // FLYSCENE
