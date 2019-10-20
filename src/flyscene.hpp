@@ -47,7 +47,11 @@ public:
   /**
    * @brief Add a new light source
    */
-  void addLight(void) { lights.push_back(flycamera.getCenter()); }
+  void addLight(void) {
+	  lights.push_back(flycamera.getCenter());
+	  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+	  intersectionLightRays.at(intersectionLightRays.size() - 1).setSize(0.005, 1);
+  }
 
   /**
   * @brief Create a sphere to trace point of intersection.
@@ -116,7 +120,16 @@ private:
   Tucano::Camera scene_light;
 
   /// A very thin cylinder to draw a debug ray
-  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  /// Intersected normal
+  Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  /// Intersected normal
+  Tucano::Shapes::Cylinder intersectNormal = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  // light sources for ray tracing
+  vector<Tucano::Shapes::Cylinder> intersectionLightRays;
 
   // Scene meshes
   Tucano::Mesh mesh;

@@ -36,7 +36,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/dodgeColorTest.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -60,8 +60,18 @@ void Flyscene::initialize(int width, int height) {
   camerarep.shapeMatrix()->scale(0.2);
 
   // the debug ray is a cylinder, set the radius and length of the cylinder
-  ray.setSize(0.005, 10.0);
+  ray.setSize(0.005, 1.f);
 
+  //Set up triangle normal from intersection
+  intersectNormal.setSize(0.005, 10.0);
+
+  //Set up reflected ray
+  reflectedRay.setSize(0.005, 10.0);
+
+
+  
+  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+  
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
 
@@ -104,8 +114,18 @@ void Flyscene::paintGL(void) {
   // render the ray and camera representation for ray debug
   ray.render(flycamera, scene_light);
   camerarep.render(flycamera, scene_light);
+  
+  reflectedRay.render(flycamera, scene_light);
+
+  //render intersection of triangle normal
+  intersectNormal.render(flycamera, scene_light);
 
   hitCircle.render(flycamera, scene_light);
+
+  for (Tucano::Shapes::Cylinder light : intersectionLightRays) {
+	  light.render(flycamera, scene_light);
+  }
+  
 
   // render ray tracing light sources as yellow spheres
   for (int i = 0; i < lights.size(); ++i) {
@@ -162,6 +182,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   vector<float> intersection;
 
   bool intersected = false;
+  int intersectedTri = -1;
   float t = std::numeric_limits<float>::max();
   for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 	  Tucano::Face currTriangle = mesh.getFace(i);
@@ -171,6 +192,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
 		  intersected = true;
 		  if (intersection.at(1) < t) {
 			  t = intersection.at(1);
+			  intersectedTri = i;
 		  }
 	  }
   }
@@ -178,12 +200,50 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   if (intersected) {
 	  Eigen::Vector3f p0 = screen_pos + (t * dir);
 	  createHitPoint(p0);
+
+	  Eigen::Vector3f distVec = t * dir;
+	  float dist = sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTri).normal;
+
+	  intersectNormal.setOriginOrientation(p0, normalTri);
+	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+	  intersectNormal.setSize(0.005, 0.3);
+
+	  reflectedRay.setOriginOrientation(p0, dir - 2 * dir.dot(normalTri) * normalTri);
+	  reflectedRay.setSize(0.005, dist);
+
+	  ray.setSize(0.005, dist);
+
+
+	  for (int i = 0; i < intersectionLightRays.size(); i++) {
+		  Eigen::Vector3f directionLight = (p0 - lights.at(i));
+		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
+		  intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
+		  float distLight = sqrt(directionLight.x() * directionLight.x() 
+			  + directionLight.y() * directionLight.y() 
+			  + directionLight.z() * directionLight.z());
+		  intersectionLightRays.at(i).setSize(0.005, distLight);
+	  }
   }
 
   else {
+	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
+	  createHitPoint(p0);
+
+	  intersectNormal.setSize(0.005, 0);
+	  reflectedRay.setSize(0.005, 0);
+
 	  ray.setSize(0.005, std::numeric_limits<float>::max());
+
+
+	  for (int i = 0; i < intersectionLightRays.size(); i++) {
+		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
+		  intersectionLightRays.at(i).setSize(0.005, 0);
+	  }
   }
 }
+
+
 
 void printProgress(float percentage) {
 	progress = (float)ray_done_counter / (float)total_num_of_rays;
