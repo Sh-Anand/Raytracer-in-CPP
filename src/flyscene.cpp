@@ -1,5 +1,6 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+#include "boundingBox.cpp"
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -122,6 +123,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f &mouse_pos) {
   // place the camera representation (frustum) on current camera location, 
   camerarep.resetModelMatrix();
   camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+
 }
 
 void Flyscene::raytraceScene(int width, int height) {
@@ -166,9 +168,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
   return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                          rand() / (float)RAND_MAX);
 
-  Eigen::Vector3f direction = dest - origin;
-
-
+  Eigen::Vector3f dir = dest - origin;
+	
 }
 
 

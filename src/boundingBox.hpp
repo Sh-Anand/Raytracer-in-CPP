@@ -12,8 +12,8 @@ class boundingBox
 private: Eigen::Vector3f bounds[2];
 
 public:
-	boundingBox(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax);
+	boundingBox(const Eigen::Vector3f &vmin, const Eigen::Vector3f &vmax);
 
-	bool boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
+	bool boxIntersect(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 };
 
