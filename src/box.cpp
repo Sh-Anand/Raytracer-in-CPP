@@ -10,10 +10,8 @@
 		bounds[1] = vmax;
 	}
 
-	bool box::boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest)
+	bool box::boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dir)
 	{
-		//Calculate direction
-		Eigen::Vector3f dir = dest - origin;
 		//Get the bounds of the box
 		Eigen::Vector3f vmin = bounds[0];
 		Eigen::Vector3f vmax = bounds[1];

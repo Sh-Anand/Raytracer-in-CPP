@@ -165,6 +165,10 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
   // remember to return your RGB values as floats in the range [0, 1]!!!
   return Eigen::Vector3f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX,
                          rand() / (float)RAND_MAX);
+
+  Eigen::Vector3f direction = dest - origin;
+
+
 }
 
 
