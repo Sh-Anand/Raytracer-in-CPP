@@ -9,11 +9,14 @@
 
 class boundingBox
 {
-private: Eigen::Vector3f bounds[2];
+private:
+	Eigen::Vector3f vmin;
+	Eigen::Vector3f vmax;
+	//Tucano::Box box;
 
 public:
-	boundingBox(const Eigen::Vector3f& vmin, const Eigen::Vector3f& vmax);
+	boundingBox(Eigen::Vector3f &minv, Eigen::Vector3f &maxv);
 
-	bool boxIntersect(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
+	bool boxIntersect(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 };
 
