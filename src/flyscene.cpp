@@ -280,8 +280,15 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 }
 
 boundingBox Flyscene::createBoxForObject() {
-	// loop trough the mesh and retrieve min and max co-ords
-	// initialize a bounding box from the min and max vector
+	Eigen::Vector3f vmin;
+	Eigen::Vector3f vmax;
+	 //loop trough the mesh and retrieve min and max co-ords
+	 for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
+     Tucano::Face face = mesh.getFace(i);    
+     for (int j =0; j<face.vertex_ids.size(); ++j){
+       std::cout<<"vertex "<<mesh.getVertex(face.vertex_ids[j]).transpose()<<std::endl;
+     }
+   }
 }
 
 
