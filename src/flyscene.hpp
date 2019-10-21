@@ -89,13 +89,20 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
+
+  float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
+
+  float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+
+  void createHitPoint(Eigen::Vector3f& point);
+
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
+
+
+  
 
 private:
-	
-  /// A small debug sphere to see where ray intersects
-  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
-
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
 
@@ -135,6 +142,8 @@ private:
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+
+  vector<vector<Eigen::Vector3f>> pixel_data;
 };
 
 #endif // FLYSCENE
