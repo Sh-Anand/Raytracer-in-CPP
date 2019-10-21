@@ -72,17 +72,12 @@ public:
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
-  vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+  float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
 
   void createHitPoint(Eigen::Vector3f& point);
 
-  Eigen::Vector3f phongShade(Tucano::Face& triangle);
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
 
-  void draw(int start, int end, int width, Eigen::Vector3f origin);
-
-  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f& origin) {
-	  return std::thread([=] { draw(start, end, width, origin); });
-  }
 
   
 
