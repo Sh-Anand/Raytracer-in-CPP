@@ -54,10 +54,6 @@ public:
   }
 
   /**
-  * @brief Create a sphere to trace point of intersection.
-  */
-  void createHitPoint(Eigen::Vector3f point);
-  /**
    * @brief Create a debug ray at the current camera location and passing
    * through pixel that mouse is over
    * @param mouse_pos Mouse cursor position in pixels
@@ -79,10 +75,8 @@ public:
   * @brief returns paramater t of the ray at point of intersection with the plane, returns floatmax if no intersection.
   */
   float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
-  /**
-  * @brief computer intersection between a ray and a triangle
-  */
-  vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+ 
+
   /**
    * @brief trace a single ray from the camera passing through dest
    * @param origin Ray origin
@@ -100,11 +94,12 @@ public:
   Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
 
 
-  
-
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
+
+  /// A small debug sphere to see where ray intersects
+  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
 
   // A fly through camera
   Tucano::Flycamera flycamera;

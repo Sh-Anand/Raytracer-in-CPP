@@ -157,7 +157,7 @@ void Flyscene::simulate(GLFWwindow *window) {
 }
 
 // Creates (technically translates) a sphere at the point provided.
-void Flyscene::createHitPoint(Eigen::Vector3f point) {
+void Flyscene::createHitPoint(Eigen::Vector3f& point) {
 	hitCircle.resetModelMatrix();
 	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
 	modelMatrix.translate(point);
@@ -166,7 +166,7 @@ void Flyscene::createHitPoint(Eigen::Vector3f point) {
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	ray.resetModelMatrix();
-	std::cout <<"Supported Threads: "<< std::thread::hardware_concurrency();
+	//std::cout <<"Supported Threads: "<< std::thread::hardware_concurrency();
 	// from pixel position to world coordinates
 	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
 	// direction from camera center to click position
@@ -174,33 +174,12 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	// position and orient the cylinder representing the ray
 	ray.setOriginOrientation(flycamera.getCenter(), dir);
 
-  bool intersected = false;
-  int intersectedTri = -1;
-  float t = std::numeric_limits<float>::max();
-  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-	  Tucano::Face currTriangle = mesh.getFace(i);
-	  intersection =
-		  rayTriangleIntersection(screen_pos, dir, currTriangle);
-	  if (intersection.at(0)) {
-		  intersected = true;
-		  if (intersection.at(1) < t) {
-			  t = intersection.at(1);
-			  intersectedTri = i;
-		  }
-	  }
-  }
-
-  if (intersected) {
-	  Eigen::Vector3f p0 = screen_pos + (t * dir);
-	  createHitPoint(p0);
-
-	  Eigen::Vector3f distVec = t * dir;
-	  float dist = sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
-	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTri).normal;
 	float intersection;
+	int intersectedTriangleIndex = -1;
 	Tucano::Face riangle;
 	bool intersected = false;
 	float t = std::numeric_limits<float>::max();
+
 	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection =
@@ -209,9 +188,19 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 			intersected = true;
 			if (intersection < t && intersection >= 0) {
 				t = intersection;
+				intersectedTriangleIndex = i;
 			}
 		}
 	}
+
+  if (intersected) {
+	  Eigen::Vector3f p0 = screen_pos + (t * dir);
+	  createHitPoint(p0);
+
+	  Eigen::Vector3f distVec = t * dir;
+	  float dist = sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
+	
 
 	  intersectNormal.setOriginOrientation(p0, normalTri);
 	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
@@ -251,15 +240,12 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
   }
 }
 
-
-
 void printProgress(float percentage) {
 	progress = (float)ray_done_counter / (float)total_num_of_rays;
 	int val = (int)(percentage * 100);
 	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
 	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	int secondsPassed = (int) (clock() - startTime) / CLOCKS_PER_SEC;
-	printf("\r%3d%% [%.*s%*s] %4d seconds passed", val, lpad, PROGRESS_BAR_STR, rpad, "", secondsPassed);
+	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
 	fflush(stdout);
 }
 
@@ -271,75 +257,35 @@ void progressLoop() {
 	}
 	printProgress(1.0f);
 }
-
-void printProgress(float percentage) {
-	progress = (float)ray_done_counter / (float)total_num_of_rays;
-	int val = (int)(percentage * 100);
-	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
-	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	int secondsPassed = (int)(clock() - startTime) / CLOCKS_PER_SEC;
-	printf("\r%3d%% [%.*s%*s] %4d seconds passed", val, lpad, PROGRESS_BAR_STR, rpad, "", secondsPassed);
-	fflush(stdout);
-}
-
-void progressLoop() {
-	printProgress(progress);
-	while (!done_ray_tracing) {
-		printProgress(progress);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-	printProgress(1.0f);
-	endTime = clock();
-}
-
-/*void Flyscene::draw(int start, int end, int width, Eigen::Vector3f origin) {
-	for (int j = start; j < end; ++j) {
-		for (int i = 0; i < width; ++i) {
-			// create a ray from the camera passing through the pixel (i,j)
-			Eigen::Vector3f screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
-			// launch raytracing for the given ray and write result to pixel data
-			Eigen::Vector3f col = traceRay(origin, screen_coords);
-			// launch raytracing for the given ray and write result to pixel data
-			pixel_data[i][j] = traceRay(origin, screen_coords);
-			//index++;
-			//Counter for progress which is critical section as it can 
-			//be overwritten by other threads which are trying to increment 
-			//the same number
-			mtx.lock();
-			ray_done_counter++;
-			mtx.unlock();
-		}
-	}
-}*/
 
 void Flyscene::raytraceScene(int width, int height) {
-	std::cout << "ray tracing ..." << std::endl;
+	
 	auto start = std::chrono::high_resolution_clock::now();
+
+  // create 2d vector to hold pixel colors and resize to match image size
+  vector<vector<Eigen::Vector3f>> pixel_data;
+  pixel_data.resize(raytracing_image_size[1]);
+  for (int i = 0; i < raytracing_image_size[1]; ++i)
+    pixel_data[i].resize(raytracing_image_size[0]);
+
+	// if no width or height passed, use dimensions of current viewport
+	Eigen::Vector2i raytracing_image_size(width, height);
+	if (width == 0 || height == 0) {
+		raytracing_image_size = flycamera.getViewportSize();
+	}
 
 	//////////////////////////
 	//Set up for progress bar
 	done_ray_tracing = false;
-	progress = 0.0f;
+	progress = 0.f;
 	ray_done_counter = 0;
 	////////////////////////
 
-  // create 2d vector to hold pixel colors and resize to match image size
-  vector<vector<Eigen::Vector3f>> pixel_data;
-  pixel_data.resize(image_size[1]);
-  for (int i = 0; i < image_size[1]; ++i)
-    pixel_data[i].resize(image_size[0]);
-
-	// if no width or height passed, use dimensions of current viewport
-	Eigen::Vector2i image_size(width, height);
-	if (width == 0 || height == 0) {
-		image_size = flycamera.getViewportSize();
-	}
-
 	// create 2d vector to hold pixel colors and resize to match image size
 	//vector<vector<Eigen::Vector3f>> pixel_data;
-	pixel_data.resize(image_size[1]);
-	for (int i = 0; i < image_size[1]; ++i)
-		pixel_data[i].resize(image_size[0]);
+	pixel_data.resize(raytracing_image_size[1]);
+	for (int i = 0; i < raytracing_image_size[1]; ++i)
+		pixel_data[i].resize(raytracing_image_size[0]);
 
 	vector<vector<Eigen::Vector3f>>& pixel_data_copy = pixel_data;
 
@@ -348,19 +294,23 @@ void Flyscene::raytraceScene(int width, int height) {
 	Eigen::Vector3f& origina = origin;
 	Eigen::Vector3f screen_coords;
 	
-	int num_threads = std::thread::hardware_concurrency();
-	int total_pixels = image_size[0] * image_size[1];
+	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
+
+
+	int num_threads = std::thread::hardware_concurrency() - 1;
+	int total_pixels = raytracing_image_size[0] * raytracing_image_size[1];
 	int partition_size = ceil(total_pixels / num_threads);
 	int counter = 0;
-	std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
+	//std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
 	
 
 	vector<vector<pair<Eigen::Vector3f, Eigen::Vector2f>>> partitions;
 	vector<pair<Eigen::Vector3f, Eigen::Vector2f>> partition;
 
+	
 
-	for (int i = 0; i < image_size[0]; i++) {
-		for (int j = 0; j < image_size[1]; j++) {
+	for (int i = 0; i < raytracing_image_size[0]; i++) {
+		for (int j = 0; j < raytracing_image_size[1]; j++) {
 			screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
 			partition.push_back(std::make_pair(screen_coords, Eigen::Vector2f(i, j)));
 			counter++;
@@ -372,6 +322,12 @@ void Flyscene::raytraceScene(int width, int height) {
 			}
 		}
 	}
+
+	std::cout << "ray tracing ..." << std::endl;
+	//start a progress bar thread
+	std::thread progressBarThread(progressLoop);
+
+
 	vector<std::thread> threads;
 	for (int id = 0; id < partitions.size(); id++) {
 		vector<pair<Eigen::Vector3f, Eigen::Vector2f>>& current_partition = partitions[id];
@@ -391,6 +347,10 @@ void Flyscene::raytraceScene(int width, int height) {
 	}
 
 	
+	done_ray_tracing = true;
+
+	progressBarThread.join();
+
 	pixel_data = pixel_data_copy;
 
 
@@ -418,12 +378,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
-
-	  int bestIntersectionTriangleIndex = -1;
-	  vector<float> intersection;
-	  //Store the best intersection (triangle closest to the camera)
-	  float t = std::numeric_limits<float>::max();
-	 
+	  Eigen::Vector3f direction = dest - origin;
 	  //Loop through all of the faces
 	  for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 		//get a direction vector
@@ -438,8 +393,14 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		  return BACKGROUND;
 	  }
 
-	Eigen::Vector3f hitPoint = origin + intersection * direction;
-	return phongShade(origin, hitPoint, mesh.getFace(bestIntersectionTriangleIndex));
+	Eigen::Vector3f hitPoint = origin + (intersection * direction);
+	Eigen::Vector3f finalColor = phongShade(origin, hitPoint, mesh.getFace(bestIntersectionTriangleIndex));
+
+	mtx.lock();
+	ray_done_counter++;
+	mtx.unlock();
+
+	return finalColor;
 	//return BACKGROUND;
 }
 
@@ -512,21 +473,21 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 /*
 //calculate the numbe rof iterations we make to generate an image
-	total_num_of_rays = (float)(image_size[1] * image_size[0]);
+	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
 	startTime = clock();
 	//start a progress bar thread
 	std::thread progressBarThread(progressLoop);
 
 	//Divide up pixel regions for the draw method and create threads that will write to pixel_data
-	int seventh = (int)(image_size[1] / 7);
+	int seventh = (int)(raytracing_image_size[1] / 7);
 
-	std::thread draw1Thread = createDrawThread(0, seventh, image_size[0], origin);
-	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, image_size[0], origin);
-	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, image_size[0], origin);
-	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, image_size[0], origin);
-	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, image_size[0], origin);
-	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, image_size[0], origin);
-	std::thread draw7Thread = createDrawThread(6 * seventh, image_size[1], image_size[0], origin);
+	std::thread draw1Thread = createDrawThread(0, seventh, raytracing_image_size[0], origin);
+	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, raytracing_image_size[0], origin);
+	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, raytracing_image_size[0], origin);
+	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, raytracing_image_size[0], origin);
+	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, raytracing_image_size[0], origin);
+	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, raytracing_image_size[0], origin);
+	std::thread draw7Thread = createDrawThread(6 * seventh, raytracing_image_size[1], raytracing_image_size[0], origin);
 
 	//Join all of the threads and determine when you are done
 	draw1Thread.join();
