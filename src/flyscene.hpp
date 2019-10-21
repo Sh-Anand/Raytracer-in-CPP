@@ -67,7 +67,7 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest, set<int>& shadows);
 
   void createHitPoint(Eigen::Vector3f point);
 
@@ -75,7 +75,7 @@ public:
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
 
-  Eigen::Vector3f Shadow(Tucano::Face& triangle);
+  set<int> calculateShadows();
 
 private:
   // A simple phong shader for rendering meshes

@@ -179,13 +179,15 @@ void Flyscene::raytraceScene(int width, int height) {
   Eigen::Vector3f origin = flycamera.getCenter();
   Eigen::Vector3f screen_coords;
 
+  //get set of indices that are shadowed - to be coloured black
+  set<int> shadows = calculateShadows();
   // for every pixel shoot a ray from the origin through the pixel coords
   for (int j = 0; j < image_size[1]; ++j) {
     for (int i = 0; i < image_size[0]; ++i) {
       // create a ray from the camera passing through the pixel (i,j)
       screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
       // launch raytracing for the given ray and write result to pixel data
-      pixel_data[i][j] = traceRay(origin, screen_coords);
+      pixel_data[i][j] = traceRay(origin, screen_coords, shadows);
     }
   }
 
@@ -196,7 +198,7 @@ void Flyscene::raytraceScene(int width, int height) {
 
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &dest) {
+                                   Eigen::Vector3f &dest, set<int>& shadows) {
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
   
@@ -208,7 +210,6 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
 	//All the triangles which are not reached by the light.
-	vector<int> shadow;
 
 	//Loop through all of the faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
@@ -219,19 +220,15 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 			t = intersection.at(1);
 			bestIntersectionTriangleIndex = i;
 		}
-		else if (intersection.at(0) && intersection.at(1) > t) {
-			//Triangle intersected, but not closest to the lightsource, thus will be in the shadow.
-			//shadow.push_back(t)
-			shadow.push_back(i);	
-		}
 	}
+
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
 	}
-	for (int i : shadow) {
-		return Shadow(mesh.getFace(i));
+	else if (shadows.find(bestIntersectionTriangleIndex)!=shadows.end()) {
+		return SHADOW;
 	}
-
+	
 	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
 
 
@@ -288,6 +285,28 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
-Eigen::Vector3f Flyscene::Shadow(Tucano::Face& triangle) {
-	return SHADOW;
+//For each triangle in the mesh, a ray of light is created from the light source to that triangle. This ray of light is now tested with every other triangle in the mesh to check if they intersect.
+//If they do intersect,and if it is obstructed by the initial triangle, then that triangle's index is added to the shadows set to be coloured black.
+set<int> Flyscene::calculateShadows() {
+	set<int> shadows;
+	Eigen::Vector3f trianglePoint;
+	Tucano::Face triangle, triangleTest;
+	Eigen::Vector3f lightDirection;
+	vector<float> intersection;
+	for (int i = 0; i < mesh.getNumberOfFaces; i++) {
+		triangle = mesh.getFace(i);
+		trianglePoint = mesh.getVertex(triangle.vertex_ids[0]) + mesh.getVertex(triangle.vertex_ids[1]) + mesh.getVertex(triangle.vertex_ids[2]);
+		for (Eigen::Vector3f lightPoint : lights) {
+			lightDirection = trianglePoint - lightPoint;
+			for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
+				if (i == j || shadows.find(j) != shadows.end())
+					continue;
+				triangleTest = mesh.getFace(j);
+				intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
+				if (intersection[0] && intersection[1] > 1)
+					shadows.insert(j);
+			}
+		}
+	}
+	return shadows;
 }
