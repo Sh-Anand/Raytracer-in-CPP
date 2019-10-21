@@ -1,6 +1,7 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
+#define SHADOW Eigen::Vector3f(0.0, 0.0, 0.0)
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -154,7 +155,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		Eigen::Vector3f p0 = screen_pos + (t * dir);
 		createHitPoint(p0);
 	}
-
 	else {
 		ray.setSize(0.005, std::numeric_limits<float>::max());
 	}
@@ -207,6 +207,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	vector<float> intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
+	//All the triangles which are not reached by the light.
+	vector<int> shadow;
 
 	//Loop through all of the faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
@@ -217,9 +219,17 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 			t = intersection.at(1);
 			bestIntersectionTriangleIndex = i;
 		}
+		else if (intersection.at(0) && intersection.at(1) > t) {
+			//Triangle intersected, but not closest to the lightsource, thus will be in the shadow.
+			//shadow.push_back(t)
+			shadow.push_back(i);	
+		}
 	}
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
+	}
+	for (int i : shadow) {
+		return Shadow(mesh.getFace(i));
 	}
 
 	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
@@ -227,7 +237,6 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 
 	return mat.getAmbient();
 }
-
 
 // Returns parameter t of r = o + td   of the ray that intersects the plane
 float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
@@ -277,4 +286,8 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 
 	result.push_back(t);
 	return result;
+}
+
+Eigen::Vector3f Flyscene::Shadow(Tucano::Face& triangle) {
+	return SHADOW;
 }
