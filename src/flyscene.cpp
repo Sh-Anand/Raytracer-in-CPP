@@ -279,16 +279,37 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
-boundingBox Flyscene::createBoxForObject() {
-	Eigen::Vector3f vmin;
-	Eigen::Vector3f vmax;
-	 //loop trough the mesh and retrieve min and max co-ords
+// Create a bounding box around the edges of the mesh, to serve as a root for the tree of boxes
+boundingBox Flyscene::createRootBox() {
+	
+	// instantiate min and max coordinates as very large and small floats, respectively
+	float xmin = std::numeric_limits<float>::max();
+	float ymin = std::numeric_limits<float>::max();
+	float zmin = std::numeric_limits<float>::max();
+	float xmax = std::numeric_limits<float>::min(); // or set to 0 /origin?
+	float ymax = std::numeric_limits<float>::min();
+	float zmax = std::numeric_limits<float>::min();
+
+	 //loop trough the mesh (get each vertex of each face)
 	 for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
-     Tucano::Face face = mesh.getFace(i);    
-     for (int j =0; j<face.vertex_ids.size(); ++j){
-       std::cout<<"vertex "<<mesh.getVertex(face.vertex_ids[j]).transpose()<<std::endl;
-     }
-   }
+		 Tucano::Face face = mesh.getFace(i);    // get current face
+		 for (int j =0; j<face.vertex_ids.size(); ++j){
+			 Eigen::Vector4f vert = mesh.getShapeModelMatrix() * mesh.getVertex(face.vertex_ids[j]); // get current vertex
+			 float x = vert.x;
+			 float y = vert.y;
+			 float z = vert.z;
+			 // update min and max values by comparing against current vertex
+			 xmin = std::min(xmin, x);
+			 xmin = std::min(ymin, y);
+			 xmin = std::min(zmin, z);
+			 xmax = std::max(xmax, x);
+			 ymax = std::max(ymax, y);
+			 zmax = std::max(zmax, z);
+		 }
+	}
+	 Eigen::Vector3f vmin = Eigen::Vector3f(xmin, ymin, zmin);
+	 Eigen::Vector3f vmax = Eigen::Vector3f(xmax, ymax, zmax);
+	 return boundingBox(vmin, vmax);
 }
 
 

@@ -75,7 +75,7 @@ public:
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
   
-  boundingBox createBoxForObject();
+  boundingBox createRootBox();
   
   void createHitPoint(Eigen::Vector3f point);
 
