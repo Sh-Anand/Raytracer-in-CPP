@@ -16,6 +16,8 @@
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
 
+#include "boundingBox.hpp"
+
 class Flyscene {
 
 public:
@@ -72,6 +74,9 @@ public:
   float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+  
+  boundingBox createBoxForObject();
+  
   void createHitPoint(Eigen::Vector3f point);
 
 private:

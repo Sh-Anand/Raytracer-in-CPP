@@ -279,5 +279,11 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
+boundingBox Flyscene::createBoxForObject() {
+	// loop trough the mesh and retrieve min and max co-ords
+	// initialize a bounding box from the min and max vector
+}
+
+
 
 
