@@ -7,7 +7,7 @@
 	/**
 	* @brief Default Constructor
 	*/
-boundingBox::boundingBox(Eigen::Vector3f& minv, Eigen::Vector3f& maxv): vmin(minv), vmax(maxv)
+boundingBox::boundingBox(Eigen::Vector3f &minv, Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
 {}
 
 /**
