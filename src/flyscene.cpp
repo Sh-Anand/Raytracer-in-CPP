@@ -398,17 +398,17 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
 
-	Eigen::Vector3f lightDirection = lights.at(0).normalized();
+	Eigen::Vector3f lightDirection = (hitPoint -lights.at(0)).normalized();
 	Eigen::Vector3f normal = (mesh.getShapeModelMatrix() * triangle.normal).normalized();
-	float costheta = normal.dot(lightDirection);
+	float costheta = abs(normal.dot(lightDirection));
 	Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
-	/*Eigen::Vector3f reflectedLight;
+	Eigen::Vector3f reflectedLight = (lightDirection - 2 * (abs(lightDirection.dot(normal))) * normal).normalized();
 	Eigen::Vector3f eyeToHitPoint = (hitPoint - origin).normalized();
-	float cosphi = max(0.0f, reflectedLight.dot(eyeToHitPoint));
-	Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());*/
+	float cosphi = abs(reflectedLight.dot(eyeToHitPoint));
+	Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
-	return ambient + diffuse;
+	return ambient + diffuse + specular;
 }
 
 /*
