@@ -14,8 +14,8 @@ float total_num_of_rays;
 unsigned int ray_done_counter;
 bool done_ray_tracing;
 std::mutex mtx;           // mutex for critical section
-clock_t startTime;
-clock_t endTime;
+
+typedef vector<pair<Eigen::Vector3f, Eigen::Vector2f>> ThreadPartition;
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -197,8 +197,8 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	  Eigen::Vector3f p0 = screen_pos + (t * dir);
 	  createHitPoint(p0);
 
-	  Eigen::Vector3f distVec = t * dir;
-	  float dist = sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+	  //Eigen::Vector3f distVec = t * dir;
+	  float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
 	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
 	
 
@@ -297,15 +297,15 @@ void Flyscene::raytraceScene(int width, int height) {
 	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
 
 
-	int num_threads = std::thread::hardware_concurrency() - 1;
+	int num_threads = std::thread::hardware_concurrency();
 	int total_pixels = raytracing_image_size[0] * raytracing_image_size[1];
 	int partition_size = ceil(total_pixels / num_threads);
 	int counter = 0;
 	//std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
 	
 
-	vector<vector<pair<Eigen::Vector3f, Eigen::Vector2f>>> partitions;
-	vector<pair<Eigen::Vector3f, Eigen::Vector2f>> partition;
+	vector<ThreadPartition> partitions;
+	ThreadPartition partition;
 
 	
 
@@ -470,35 +470,3 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 	return ambient + diffuse + specular;
 }
-
-/*
-//calculate the numbe rof iterations we make to generate an image
-	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
-	startTime = clock();
-	//start a progress bar thread
-	std::thread progressBarThread(progressLoop);
-
-	//Divide up pixel regions for the draw method and create threads that will write to pixel_data
-	int seventh = (int)(raytracing_image_size[1] / 7);
-
-	std::thread draw1Thread = createDrawThread(0, seventh, raytracing_image_size[0], origin);
-	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, raytracing_image_size[0], origin);
-	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, raytracing_image_size[0], origin);
-	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, raytracing_image_size[0], origin);
-	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, raytracing_image_size[0], origin);
-	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, raytracing_image_size[0], origin);
-	std::thread draw7Thread = createDrawThread(6 * seventh, raytracing_image_size[1], raytracing_image_size[0], origin);
-
-	//Join all of the threads and determine when you are done
-	draw1Thread.join();
-	draw2Thread.join();
-	draw3Thread.join();
-	draw4Thread.join();
-	draw5Thread.join();
-	draw6Thread.join();
-	draw7Thread.join();
-
-
-	done_ray_tracing = true;
-
-	progressBarThread.join();*/
