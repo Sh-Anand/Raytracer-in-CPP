@@ -77,7 +77,7 @@ public:
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
 
-  Eigen::Vector3f Shadow(Tucano::Face& triangle);
+  bool calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
 
 private:
   // A simple phong shader for rendering meshes
