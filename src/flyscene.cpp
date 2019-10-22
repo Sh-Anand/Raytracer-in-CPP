@@ -283,7 +283,8 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
-//Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passing through that point intersects with any other triangle on the way. If yes, black.
+//Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
+//if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
 bool Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
 	
 	Tucano::Face triangleTest;
@@ -294,10 +295,10 @@ bool Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face trian
 		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
 			triangleTest = mesh.getFace(j);
 			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
-			if (intersection[0] && intersection[1] < 1) {
-				return true;
+			if (intersection[0] && intersection[1] >= 1) {
+				return false;
 			}
 		}
 	}
-	return false;
+	return true;
 }
