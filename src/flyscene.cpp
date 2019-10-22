@@ -1,7 +1,8 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+#include <math.h>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
-#define SHADOW Eigen::Vector3f(0.0, 0.0, 0.0)
+//#define SHADOW Eigen::Vector3f(0.0, 0.0, 0.0)
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -222,14 +223,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
 	}
-	else if (calculateShadow(origin + t * direction, mesh.getFace(bestIntersectionTriangleIndex))) {
-		return SHADOW;
+	else {
+		return calculateShadow(origin + t * direction, mesh.getFace(bestIntersectionTriangleIndex));
 	}
-
-	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
-
-
-	return mat.getAmbient();
 }
 
 
@@ -285,20 +281,29 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
-bool Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
+Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
 
 	Tucano::Face triangleTest;
 	Eigen::Vector3f lightDirection;
 	vector<float> intersection;
+	Eigen::Vector3f output = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
 	for (Eigen::Vector3f lightPoint : lights) {
 		lightDirection = trianglePoint - lightPoint;
+		float distance = _CMATH_::pow(lightDirection.x, 2) + _CMATH_::pow(lightDirection.y, 2) + _CMATH_::pow(lightDirection.z, 2);
+		float intensity = 1 / distance;
 		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
 			triangleTest = mesh.getFace(j);
 			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
 			if (intersection[0] && intersection[1] >= 1) {
-				return false;
+				output = output + Eigen::Vector3f(intensity, intensity, intensity);
 			}
 		}
+		float x = output.x;
+		float y = output.y;
+		float z = output.z;
+		intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 	}
-	return true;
+
+	return intensityFactor * materials[triangle.material_id].getAmbient;
 }
