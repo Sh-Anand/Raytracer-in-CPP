@@ -12,7 +12,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/dodgeColorTest.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -23,6 +23,7 @@ void Flyscene::initialize(int width, int height) {
     phong.addMaterial(materials[i]);
 
 
+  objectBox = createRootBox();
 
   // set the color and size of the sphere to represent the light sources
   // same sphere is used for all sources
@@ -90,6 +91,17 @@ void Flyscene::paintGL(void) {
 
   // render coordinate system at lower right corner
   flycamera.renderAtCorner();
+
+  boxMin.render(flycamera, scene_light);
+  boxMax.render(flycamera, scene_light);
+  //X_axies.render(flycamera, scene_light);
+  //Y_axies.render(flycamera, scene_light);
+  //Z_axies.render(flycamera, scene_light);
+
+  //boundingboxVisual = 
+
+  //create box
+  //boundingboxVisual.render(flycamera, scene_light);
 }
 
 void Flyscene::simulate(GLFWwindow *window) {
@@ -111,6 +123,15 @@ void Flyscene::simulate(GLFWwindow *window) {
   flycamera.translate(dx, dy, dz);
 }
 
+// Creates (technically translates) a box at the point provided.
+void Flyscene::createBox(Eigen::Vector3f point) {
+	boundingboxVisual.resetModelMatrix();
+	Eigen::Affine3f modelMatrix = boundingboxVisual.getModelMatrix();
+	modelMatrix.translate(point);
+	boundingboxVisual.setModelMatrix(modelMatrix);
+}
+
+
 // Creates (technically translates) a sphere at the point provided.
 void Flyscene::createHitPoint(Eigen::Vector3f point) {
 	hitCircle.resetModelMatrix();
@@ -121,54 +142,78 @@ void Flyscene::createHitPoint(Eigen::Vector3f point) {
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
-	boundingBox box = createRootBox();
+	//BoundingBox box = createRootBox();
 
-	Eigen::Vector3f minimum = box.getMin();
+	/*Eigen::Vector3f minimum = box.getMin();
 	Eigen::Vector3f maximum = box.getMax();
 
 	std::cout << "min:" << minimum << std::endl;
 
-	std::cout << "max:" << maximum << std::endl;
+	std::cout << "max:" << maximum << std::endl;*/
 
 
-	//ray.resetModelMatrix();
+	ray.resetModelMatrix();
 
 	//std::cout << "DEBUG: " << flycamera.getViewportSize();
 	//// from pixel position to world coordinates
-	//Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
+	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
 	//// direction from camera center to click position
-	//Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
+	Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
 	//// position and orient the cylinder representing the ray
-	//ray.setOriginOrientation(flycamera.getCenter(), dir);
+	ray.setOriginOrientation(flycamera.getCenter(), dir);
 
 	//// place the camera representation (frustum) on current camera location, 
-	//camerarep.resetModelMatrix();
-	//camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+	camerarep.resetModelMatrix();
+	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 
-	//vector<float> intersection;
+	vector<float> intersection;
 
-	//bool intersected = false;
-	//float t = std::numeric_limits<float>::max();
-	//for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-	//	Tucano::Face currTriangle = mesh.getFace(i);
-	//	intersection =
-	//		rayTriangleIntersection(screen_pos, dir, currTriangle);
-	//	if (intersection.at(0)) {
-	//		intersected = true;
-	//		if (intersection.at(1) < t) {
-	//			t = intersection.at(1);
-	//		}
-	//	}
-	//}
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		Tucano::Face currTriangle = mesh.getFace(i);
+		intersection =
+			rayTriangleIntersection(screen_pos, dir, currTriangle);
+		if (intersection.at(0)) {
+			intersected = true;
+			if (intersection.at(1) < t) {
+				t = intersection.at(1);
+			}
+		}
+	}
 
-	//if (intersected) {
-	//	Eigen::Vector3f p0 = screen_pos + (t * dir);
-	//	createHitPoint(p0);
-	//}
+	if (intersected) {
+		Eigen::Vector3f p0 = screen_pos + (t * dir);
+		createHitPoint(p0);
+	}
 
-	//else {
-	//	ray.setSize(0.005, std::numeric_limits<float>::max());
-	//}
+	else {
+		ray.setSize(0.005, std::numeric_limits<float>::max());
+	}
+
+	boxMin.resetModelMatrix();
+	Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
+	boxMinModelMatrix.translate(objectBox.getMin());
+	boxMin.setModelMatrix(boxMinModelMatrix);
+	boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+
+	boxMax.resetModelMatrix();
+	Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
+	boxMaxModelMatrix.translate(objectBox.getMax());
+	boxMax.setModelMatrix(boxMaxModelMatrix);
+	boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+
+	/*X_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(1.f, 0.f, 0.f));
+	Y_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 1.f, 0.f));
+	Z_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 1.f));
+
+	X_axies.setSize(0.005, 5);
+	Y_axies.setSize(0.005, 5);
+	Z_axies.setSize(0.005, 5);
+
+	X_axies.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+	Y_axies.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+	Z_axies.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f));*/
 }
 
 void Flyscene::raytraceScene(int width, int height) {
@@ -291,7 +336,7 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 }
 
 // Create a bounding box around the edges of the mesh, to serve as a root for the tree of boxes
-boundingBox Flyscene::createRootBox() {
+BoundingBox Flyscene::createRootBox() {
 	
 	// instantiate min and max coordinates as very large and small floats, respectively
 	float xmin = std::numeric_limits<float>::max();
@@ -320,7 +365,7 @@ boundingBox Flyscene::createRootBox() {
 	}
 	 Eigen::Vector3f vmin = Eigen::Vector3f(xmin, ymin, zmin);
 	 Eigen::Vector3f vmax = Eigen::Vector3f(xmax, ymax, zmax);
-	 return boundingBox(vmin, vmax);
+	 return BoundingBox(vmin, vmax);
 }
 
 

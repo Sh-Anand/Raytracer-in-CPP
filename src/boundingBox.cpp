@@ -7,13 +7,13 @@
 	/**
 	* @brief Default Constructor
 	*/
-boundingBox::boundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
+BoundingBox::BoundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
 {}
 
 /**
 * @brief Intersection test
 */
-bool boundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest)
+bool BoundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest)
 {
 	//Calculate direction
 	Eigen::Vector3f dir = dest - origin;
@@ -50,10 +50,10 @@ bool boundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vecto
 
 }
 
-Eigen::Vector3f boundingBox::getMin() {
+Eigen::Vector3f BoundingBox::getMin() {
 	return vmin;
 }
 
-Eigen::Vector3f boundingBox::getMax() {
+Eigen::Vector3f BoundingBox::getMax() {
 	return vmax;
 }

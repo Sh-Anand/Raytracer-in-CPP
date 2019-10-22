@@ -7,7 +7,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-class boundingBox
+class BoundingBox
 {
 private:
 	Eigen::Vector3f vmin;
@@ -15,7 +15,9 @@ private:
 	//Tucano::Box box;
 
 public:
-	boundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv);
+	BoundingBox(void){}
+
+	BoundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv);
 
 	bool boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest);
 
