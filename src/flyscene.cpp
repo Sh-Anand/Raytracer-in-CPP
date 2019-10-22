@@ -297,13 +297,14 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
 			if (intersection[0] && intersection[1] >= 1) {
 				output = output + Eigen::Vector3f(intensity, intensity, intensity);
+				
 			}
 		}
-		float x = output.x;
-		float y = output.y;
-		float z = output.z;
-		intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 	}
+	float x = output.x;
+	float y = output.y;
+	float z = output.z;
+	intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 
 	return intensityFactor * materials[triangle.material_id].getAmbient;
 }
