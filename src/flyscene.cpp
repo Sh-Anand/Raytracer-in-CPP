@@ -194,12 +194,11 @@ void Flyscene::raytraceScene(int width, int height) {
   std::cout << "ray tracing done! " << std::endl;
 }
 
+Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
+	Eigen::Vector3f& dest) {
+	// just some fake random color per pixel until you implement your ray tracing
+	// remember to return your RGB values as floats in the range [0, 1]!!!
 
-Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &dest) {
-  // just some fake random color per pixel until you implement your ray tracing
-  // remember to return your RGB values as floats in the range [0, 1]!!!
-  
 
 	Eigen::Vector3f direction = dest - origin;
 
@@ -207,6 +206,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	vector<float> intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
+	//All the triangles which are not reached by the light.
 
 	//Loop through all of the faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
@@ -218,42 +218,20 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 			bestIntersectionTriangleIndex = i;
 		}
 	}
+
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
 	}
-
-	return traceLightRay(dest, lights.back());
-
-}
-
-//Method that does raytracing from the given pixel (origin) to the light source to determine shadow
-Eigen::Vector3f Flyscene::traceLightRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest) {
-	Eigen::Vector3f direction = dest - origin;
-
-	int bestIntersectionTriangleIndexLight = -1;
-	vector<float> intersection;
-	//Store the best intersection (triangle closest to the pixel)
-	float t = std::numeric_limits<float>::max();
-	//All the triangles which are not reached by the light.
-	vector<int> shadow;
-
-	//Loop through all of the faces
-	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-		//get a direction vector
-		Tucano::Face currTriangle = mesh.getFace(i);
-		intersection = rayTriangleIntersection(origin, direction, currTriangle);
-		if (intersection.at(0) && intersection.at(1) < t) {
-			t = intersection.at(1);
-			bestIntersectionTriangleIndexLight = i;
-		}
-	}
-	if (bestIntersectionTriangleIndexLight == -1) {
-		Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndexLight).material_id];
-		return mat.getAmbient();
+	else if (calculateShadow(origin + t * direction, mesh.getFace(bestIntersectionTriangleIndex))) {
+		return SHADOW;
 	}
 
-	return Eigen::Vector3f(0,0,0);
+	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
+
+
+	return mat.getAmbient();
 }
+
 
 // Returns parameter t of r = o + td   of the ray that intersects the plane
 float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
