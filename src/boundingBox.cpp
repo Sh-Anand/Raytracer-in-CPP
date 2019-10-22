@@ -39,6 +39,7 @@ bool boundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vecto
 	float tin = std::max(std::max(tinx, tiny), tinz);
 	float tout = std::min(std::min(toutx, touty), toutz);
 
+
 	//Conditions
 	if ((tin > tout) || (tout < 0)) {
 		return false;
@@ -46,4 +47,13 @@ bool boundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vecto
 	else {
 		return true;
 	}
+
+}
+
+Eigen::Vector3f boundingBox::getMin() {
+	return vmin;
+}
+
+Eigen::Vector3f boundingBox::getMax() {
+	return vmax;
 }

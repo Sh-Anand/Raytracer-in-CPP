@@ -18,5 +18,9 @@ public:
 	boundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv);
 
 	bool boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest);
+
+	Eigen::Vector3f getMin();
+
+	Eigen::Vector3f getMax();
 };
 

@@ -120,44 +120,55 @@ void Flyscene::createHitPoint(Eigen::Vector3f point) {
 }
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
-	ray.resetModelMatrix();
 
-	std::cout << "DEBUG: " << flycamera.getViewportSize();
-	// from pixel position to world coordinates
-	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
-	// direction from camera center to click position
-	Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
-	// position and orient the cylinder representing the ray
-	ray.setOriginOrientation(flycamera.getCenter(), dir);
+	boundingBox box = createRootBox();
 
-	// place the camera representation (frustum) on current camera location, 
-	camerarep.resetModelMatrix();
-	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+	Eigen::Vector3f minimum = box.getMin();
+	Eigen::Vector3f maximum = box.getMax();
 
-	vector<float> intersection;
+	std::cout << "min:" << minimum << std::endl;
 
-	bool intersected = false;
-	float t = std::numeric_limits<float>::max();
-	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-		Tucano::Face currTriangle = mesh.getFace(i);
-		intersection =
-			rayTriangleIntersection(screen_pos, dir, currTriangle);
-		if (intersection.at(0)) {
-			intersected = true;
-			if (intersection.at(1) < t) {
-				t = intersection.at(1);
-			}
-		}
-	}
+	std::cout << "max:" << maximum << std::endl;
 
-	if (intersected) {
-		Eigen::Vector3f p0 = screen_pos + (t * dir);
-		createHitPoint(p0);
-	}
 
-	else {
-		ray.setSize(0.005, std::numeric_limits<float>::max());
-	}
+	//ray.resetModelMatrix();
+
+	//std::cout << "DEBUG: " << flycamera.getViewportSize();
+	//// from pixel position to world coordinates
+	//Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
+	//// direction from camera center to click position
+	//Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
+	//// position and orient the cylinder representing the ray
+	//ray.setOriginOrientation(flycamera.getCenter(), dir);
+
+	//// place the camera representation (frustum) on current camera location, 
+	//camerarep.resetModelMatrix();
+	//camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+
+	//vector<float> intersection;
+
+	//bool intersected = false;
+	//float t = std::numeric_limits<float>::max();
+	//for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+	//	Tucano::Face currTriangle = mesh.getFace(i);
+	//	intersection =
+	//		rayTriangleIntersection(screen_pos, dir, currTriangle);
+	//	if (intersection.at(0)) {
+	//		intersected = true;
+	//		if (intersection.at(1) < t) {
+	//			t = intersection.at(1);
+	//		}
+	//	}
+	//}
+
+	//if (intersected) {
+	//	Eigen::Vector3f p0 = screen_pos + (t * dir);
+	//	createHitPoint(p0);
+	//}
+
+	//else {
+	//	ray.setSize(0.005, std::numeric_limits<float>::max());
+	//}
 }
 
 void Flyscene::raytraceScene(int width, int height) {
@@ -300,8 +311,8 @@ boundingBox Flyscene::createRootBox() {
 			 float z = vert.z();
 			 // update min and max values by comparing against current vertex
 			 xmin = std::min(xmin, x);
-			 xmin = std::min(ymin, y);
-			 xmin = std::min(zmin, z);
+			 ymin = std::min(ymin, y);
+			 zmin = std::min(zmin, z);
 			 xmax = std::max(xmax, x);
 			 ymax = std::max(ymax, y);
 			 zmax = std::max(zmax, z);
