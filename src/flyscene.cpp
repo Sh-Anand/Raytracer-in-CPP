@@ -170,31 +170,31 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	vector<float> intersection;
 
-	bool intersected = false;
-	float t = std::numeric_limits<float>::max();
-	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-		Tucano::Face currTriangle = mesh.getFace(i);
-		intersection =
-			rayTriangleIntersection(screen_pos, dir, currTriangle);
-		if (intersection.at(0)) {
-			intersected = true;
-			if (intersection.at(1) < t) {
-				t = intersection.at(1);
-			}
-		}
-	}
 
 	// uncomment to check boxIntersection method:
-	/*bool hitBox = objectBox.boxIntersect(flycamera.getCenter(), screen_pos);
+	bool hitBox = objectBox.boxIntersect(flycamera.getCenter(), screen_pos);
 
-	if (hitBox) {
+
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+
+	if(hitBox) {
+		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+			Tucano::Face currTriangle = mesh.getFace(i);
+			intersection =
+				rayTriangleIntersection(screen_pos, dir, currTriangle);
+			if (intersection.at(0)) {
+				intersected = true;
+				if (intersection.at(1) < t) {
+					t = intersection.at(1);
+				}
+			}
+		}
 		ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 	}
-
 	else {
 		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
-	}*/
-
+	}
 
 	if (intersected) {
 		Eigen::Vector3f p0 = screen_pos + (t * dir);
@@ -216,6 +216,9 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	boxMaxModelMatrix.translate(objectBox.getMax());
 	boxMax.setModelMatrix(boxMaxModelMatrix);
 	boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+
+
+	//Show X, Y and Z axies
 
 	/*X_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(1.f, 0.f, 0.f));
 	Y_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 1.f, 0.f));
