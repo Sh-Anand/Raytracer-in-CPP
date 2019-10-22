@@ -15,7 +15,7 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
-
+#include <thread>
 class Flyscene {
 
 public:
@@ -47,7 +47,11 @@ public:
   /**
    * @brief Add a new light source
    */
-  void addLight(void) { lights.push_back(flycamera.getCenter()); }
+  void addLight(void) {
+	  lights.push_back(flycamera.getCenter());
+	  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+	  intersectionLightRays.at(intersectionLightRays.size() - 1).setSize(0.005, 1);
+  }
 
   /**
    * @brief Create a debug ray at the current camera location and passing
@@ -56,10 +60,22 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+
   /**
    * @brief raytrace your scene from current camera position   
    */
   void raytraceScene(int width = 0, int height = 0);
+
+  void draw(int start, int end, int width, Eigen::Vector3f origin);
+
+  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
+	  return std::thread([=] { draw(start, end, width, origin); });
+  }
+  /**
+  * @brief returns paramater t of the ray at point of intersection with the plane, returns floatmax if no intersection.
+  */
+  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
+ 
 
   /**
    * @brief trace a single ray from the camera passing through dest
@@ -67,17 +83,22 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
 
-  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
+  float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
-  vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
-  void createHitPoint(Eigen::Vector3f point);
+  float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+
+  void createHitPoint(Eigen::Vector3f& point);
+
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
+
 
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
 
+  /// A small debug sphere to see where ray intersects
   Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
 
   // A fly through camera
@@ -100,13 +121,24 @@ private:
   Tucano::Camera scene_light;
 
   /// A very thin cylinder to draw a debug ray
-  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  /// Intersected normal
+  Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  /// Intersected normal
+  Tucano::Shapes::Cylinder intersectNormal = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  // light sources for ray tracing
+  vector<Tucano::Shapes::Cylinder> intersectionLightRays;
 
   // Scene meshes
   Tucano::Mesh mesh;
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+
+  vector<vector<Eigen::Vector3f>> pixel_data;
 };
 
 #endif // FLYSCENE
