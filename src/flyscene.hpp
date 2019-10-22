@@ -11,11 +11,16 @@
 #include <tucano/shapes/camerarep.hpp>
 #include <tucano/shapes/cylinder.hpp>
 #include <tucano/shapes/sphere.hpp>
+#include <tucano/shapes/box.hpp>
 #include <tucano/utils/flycamera.hpp>
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
 #include <thread>
+
+
+#include "boundingBox.hpp"
+
 class Flyscene {
 
 public:
@@ -88,11 +93,15 @@ public:
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
   float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+  
+  BoundingBox createRootBox();
 
   void createHitPoint(Eigen::Vector3f& point);
 
   Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
 
+
+  void createBox(Eigen::Vector3f point);
 
 private:
   // A simple phong shader for rendering meshes
@@ -137,6 +146,21 @@ private:
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+
+  //Bounding box for the object
+  BoundingBox objectBox;
+  
+  //Visual aid object for a bounding box
+  Tucano::Shapes::Box boundingboxVisual;
+
+
+  Tucano::Shapes::Sphere boxMin = Tucano::Shapes::Sphere(0.02);
+  Tucano::Shapes::Sphere boxMax = Tucano::Shapes::Sphere(0.02);
+
+  Tucano::Shapes::Cylinder X_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder Y_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder Z_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+
 
   vector<vector<Eigen::Vector3f>> pixel_data;
 };
