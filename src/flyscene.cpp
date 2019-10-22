@@ -184,6 +184,18 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		}
 	}
 
+	// uncomment to check boxIntersection method:
+	/*bool hitBox = objectBox.boxIntersect(flycamera.getCenter(), screen_pos);
+
+	if (hitBox) {
+		ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+	}
+
+	else {
+		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+	}*/
+
+
 	if (intersected) {
 		Eigen::Vector3f p0 = screen_pos + (t * dir);
 		createHitPoint(p0);
