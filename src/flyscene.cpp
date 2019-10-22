@@ -168,6 +168,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 			intersected = true;
 			if (intersection < t && intersection >= 0) {
 				t = intersection;
+				riangle = currTriangle;
 			}
 		}
 	}
@@ -175,6 +176,8 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	if (intersected) {
 		Eigen::Vector3f p0 = screen_pos + (t * dir);
 		createHitPoint(p0);
+		std::cout <<endl<< materials[riangle.material_id].getShininess();
+		
 	}
 
 	else {
@@ -399,13 +402,13 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
 
 	Eigen::Vector3f lightDirection = (hitPoint -lights.at(0)).normalized();
-	Eigen::Vector3f normal = (mesh.getShapeModelMatrix() * triangle.normal).normalized();
-	float costheta = abs(normal.dot(lightDirection));
+	Eigen::Vector3f normal = (mesh.getModelMatrix() * triangle.normal).normalized();
+	float costheta = max(0.0f, normal.dot(lightDirection));
 	Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
-	Eigen::Vector3f reflectedLight = (lightDirection - 2 * (abs(lightDirection.dot(normal))) * normal).normalized();
+	Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
 	Eigen::Vector3f eyeToHitPoint = (hitPoint - origin).normalized();
-	float cosphi = abs(reflectedLight.dot(eyeToHitPoint));
+	float cosphi = max(0.0f,reflectedLight.dot(eyeToHitPoint));
 	Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
 	return ambient + diffuse + specular;
