@@ -142,7 +142,8 @@ void Flyscene::createHitPoint(Eigen::Vector3f point) {
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
-	//BoundingBox box = createRootBox();
+	// uncomment to check the results of createRootBox:
+	/*boundingBox box = createRootBox();
 
 	/*Eigen::Vector3f minimum = box.getMin();
 	Eigen::Vector3f maximum = box.getMax();
@@ -151,6 +152,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	std::cout << "max:" << maximum << std::endl;*/
 
+	ray.resetModelMatrix();
 
 	ray.resetModelMatrix();
 
