@@ -121,54 +121,54 @@ void Flyscene::createHitPoint(Eigen::Vector3f point) {
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
-	boundingBox box = createRootBox();
+	// uncomment to check the results of createRootBox:
+	/*boundingBox box = createRootBox();
 
 	Eigen::Vector3f minimum = box.getMin();
 	Eigen::Vector3f maximum = box.getMax();
 
 	std::cout << "min:" << minimum << std::endl;
 
-	std::cout << "max:" << maximum << std::endl;
+	std::cout << "max:" << maximum << std::endl;*/
 
+	ray.resetModelMatrix();
 
-	//ray.resetModelMatrix();
+	std::cout << "DEBUG: " << flycamera.getViewportSize();
+	// from pixel position to world coordinates
+	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
+	// direction from camera center to click position
+	Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
+	// position and orient the cylinder representing the ray
+	ray.setOriginOrientation(flycamera.getCenter(), dir);
 
-	//std::cout << "DEBUG: " << flycamera.getViewportSize();
-	//// from pixel position to world coordinates
-	//Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
-	//// direction from camera center to click position
-	//Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
-	//// position and orient the cylinder representing the ray
-	//ray.setOriginOrientation(flycamera.getCenter(), dir);
+	// place the camera representation (frustum) on current camera location, 
+	camerarep.resetModelMatrix();
+	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 
-	//// place the camera representation (frustum) on current camera location, 
-	//camerarep.resetModelMatrix();
-	//camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
+	vector<float> intersection;
 
-	//vector<float> intersection;
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		Tucano::Face currTriangle = mesh.getFace(i);
+		intersection =
+			rayTriangleIntersection(screen_pos, dir, currTriangle);
+		if (intersection.at(0)) {
+			intersected = true;
+			if (intersection.at(1) < t) {
+				t = intersection.at(1);
+			}
+		}
+	}
 
-	//bool intersected = false;
-	//float t = std::numeric_limits<float>::max();
-	//for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-	//	Tucano::Face currTriangle = mesh.getFace(i);
-	//	intersection =
-	//		rayTriangleIntersection(screen_pos, dir, currTriangle);
-	//	if (intersection.at(0)) {
-	//		intersected = true;
-	//		if (intersection.at(1) < t) {
-	//			t = intersection.at(1);
-	//		}
-	//	}
-	//}
+	if (intersected) {
+		Eigen::Vector3f p0 = screen_pos + (t * dir);
+		createHitPoint(p0);
+	}
 
-	//if (intersected) {
-	//	Eigen::Vector3f p0 = screen_pos + (t * dir);
-	//	createHitPoint(p0);
-	//}
-
-	//else {
-	//	ray.setSize(0.005, std::numeric_limits<float>::max());
-	//}
+	else {
+		ray.setSize(0.005, std::numeric_limits<float>::max());
+	}
 }
 
 void Flyscene::raytraceScene(int width, int height) {
