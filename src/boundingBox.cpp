@@ -7,24 +7,24 @@
 	/**
 	* @brief Default Constructor
 	*/
-boundingBox::boundingBox(Eigen::Vector3f &minv, Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
+boundingBox::boundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
 {}
 
 /**
 * @brief Intersection test
 */
-bool boundingBox::boxIntersect(Eigen::Vector3f &origin, Eigen::Vector3f &dest)
+bool boundingBox::boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest)
 {
 	//Calculate direction
 	Eigen::Vector3f dir = dest - origin;
 
 	//Calculate intersection parameter for six sides of box
-	float txmin = (vmin.x - origin.x) / dir.x;
-	float txmax = (vmax.x - origin.x) / dir.x;
-	float tymin = (vmin.y - origin.y) / dir.y;
-	float tymax = (vmax.y - origin.y) / dir.y;
-	float tzmin = (vmin.z - origin.z) / dir.z;
-	float tzmax = (vmax.z - origin.z) / dir.z;
+	float txmin = (vmin.x() - origin.x()) / dir.x();
+	float txmax = (vmax.x() - origin.x()) / dir.x();
+	float tymin = (vmin.y() - origin.y()) / dir.y();
+	float tymax = (vmax.y() - origin.y()) / dir.y();
+	float tzmin = (vmin.z() - origin.z()) / dir.z();
+	float tzmax = (vmax.z() - origin.z()) / dir.z();
 
 	//Determine when we first cross (in point) and last cross (out) the correspondong
 	//planes along each axis

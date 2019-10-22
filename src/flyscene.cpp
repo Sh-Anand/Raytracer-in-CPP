@@ -295,9 +295,9 @@ boundingBox Flyscene::createRootBox() {
 		 Tucano::Face face = mesh.getFace(i);    // get current face
 		 for (int j =0; j<face.vertex_ids.size(); ++j){
 			 Eigen::Vector4f vert = mesh.getShapeModelMatrix() * mesh.getVertex(face.vertex_ids[j]); // get current vertex
-			 float x = vert.x;
-			 float y = vert.y;
-			 float z = vert.z;
+			 float x = vert.x();
+			 float y = vert.y();
+			 float z = vert.z();
 			 // update min and max values by comparing against current vertex
 			 xmin = std::min(xmin, x);
 			 xmin = std::min(ymin, y);

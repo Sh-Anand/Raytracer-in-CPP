@@ -15,8 +15,8 @@ private:
 	//Tucano::Box box;
 
 public:
-	boundingBox(Eigen::Vector3f &minv, Eigen::Vector3f &maxv);
+	boundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv);
 
-	bool boxIntersect(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+	bool boxIntersect(const Eigen::Vector3f &origin, const Eigen::Vector3f &dest);
 };
 
