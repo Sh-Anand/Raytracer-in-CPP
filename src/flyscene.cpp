@@ -279,6 +279,10 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
+float calcDistanceV3(Eigen::Vector3f vector) {
+	return _CMATH_::pow(vector[0], 2) + _CMATH_::pow(vector[1], 2) + _CMATH_::pow(vector[2], 2);
+}
+
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
 Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
@@ -290,14 +294,25 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
 	for (Eigen::Vector3f lightPoint : lights) {
 		lightDirection = trianglePoint - lightPoint;
-		float distance = _CMATH_::pow(lightDirection[0], 2) + _CMATH_::pow(lightDirection[1], 2) + _CMATH_::pow(lightDirection[2], 2);
+		float distance = calcDistanceV3(lightDirection);
 		float intensity = 1 / distance;
 		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
 			triangleTest = mesh.getFace(j);
 			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
-			if (intersection[0] && intersection[1] >= 1) {
-				output = output + Eigen::Vector3f(intensity, intensity, intensity);
-				
+
+			Eigen::Vector3f triangleNormal = triangleTest.normal;
+			Eigen::Vector3f vertices = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
+
+			float t = rayPlaneIntersection(trianglePoint, lightDirection, triangleNormal, vertices);
+			float triangleTestDistance = calcDistanceV3(t * lightDirection - lightPoint);
+
+			cout << triangleTestDistance << " < " << distance << endl;
+
+			if (triangleTestDistance < distance) {
+				cout << " Testing intersection for shadow " << endl;
+				if (intersection[0] && intersection[1] >= 1) {
+					output = output + Eigen::Vector3f(intensity, intensity, intensity);
+				}
 			}
 		}
 	}
@@ -306,5 +321,6 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	float z = output[2];
 	intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 
-	return materials[triangle.material_id].getAmbient();
+	//return materials[triangle.material_id].getAmbient();
+	return intensityFactor;
 }
