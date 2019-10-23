@@ -367,9 +367,16 @@ void Flyscene::raytraceScene(int width, int height) {
 	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
 
 
-	int num_threads = std::thread::hardware_concurrency();
+	int num_threads = std::thread::hardware_concurrency() - 1;
 	int total_pixels = raytracing_image_size[0] * raytracing_image_size[1];
 	int partition_size = ceil(total_pixels / num_threads);
+
+	//std::cout << "total_pixels: " << total_pixels << std::endl;
+	//std::cout << "partition_size_total: " << num_threads * partition_size << std::endl;
+
+	std::cout << "" << std::endl;
+	std::cout << "Setting up threads ..." << std::endl;
+
 	int counter = 0;
 	//std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
 	
@@ -400,9 +407,9 @@ void Flyscene::raytraceScene(int width, int height) {
 
 	vector<std::thread> threads;
 	for (int id = 0; id < partitions.size(); id++) {
-		vector<pair<Eigen::Vector3f, Eigen::Vector2f>>& current_partition = partitions[id];
+		ThreadPartition& current_partition = partitions[id];
 		auto f = [&origina, &current_partition, this, &pixel_data_copy]() {
-			vector<pair<Eigen::Vector3f, Eigen::Vector2f>> thread_partition = current_partition;
+			ThreadPartition thread_partition = current_partition;
 			pair<Eigen::Vector3f, Eigen::Vector2f> partition_element;
 			for (int k = 0; k < thread_partition.size(); k++) {
 				partition_element = thread_partition[k];
