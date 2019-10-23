@@ -23,7 +23,6 @@ class BoundingBox
 private:
 	Eigen::Vector3f vmin;
 	Eigen::Vector3f vmax;
-	//Tucano::Box box;
 
 public:
 	BoundingBox(void){}

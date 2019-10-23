@@ -84,7 +84,7 @@ public:
 
   Tucano::Mesh& getMesh();
 
-  BoxTree initializeTree();
+  BoxTree initializeOctree();
 
 private:
   // A simple phong shader for rendering meshes

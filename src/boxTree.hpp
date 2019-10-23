@@ -14,11 +14,16 @@
 class BoxTree {
 public:
 	BoundingBox box;
+	int capacity;
 	std::list<BoxTree> children;
-	std::list<Tucano::Face> faces;
+	std::list<int> faces;
 
-	BoxTree(void) {};
+	BoxTree(void) {}
 
-	BoxTree(BoundingBox box, std::list<BoxTree> children, std::list<Tucano::Face> faces);
+	BoxTree(BoundingBox box, int capacity);
+
+	BoxTree(Tucano::Mesh& mesh, int capacity);
+
+	void split();
 
 };
