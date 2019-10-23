@@ -43,6 +43,10 @@ void Flyscene::initialize(int width, int height) {
 
   glEnable(GL_DEPTH_TEST);
 
+  // uncomment when boxTree class is fully implemented:
+  // int capacity = max(5, mesh.getNumberOfFaces()/100);
+  // octree = BoxTree::BoxTree(getMesh(), capacity);
+
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
   //   Tucano::Face face = mesh.getFace(i);    
   //   for (int j =0; j<face.vertex_ids.size(); ++j){
@@ -289,8 +293,10 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
 
-	//Loop through all of the faces
-	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+	std::list<int> faces = octree.intersect(origin, dest);
+	
+	//Loop through the reduced list of faces
+	for (int i : faces) {
 		//get a direction vector
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection = rayTriangleIntersection(origin, direction, currTriangle);
@@ -302,6 +308,20 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
 	}
+
+	////Loop through all of the faces
+	//for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+	//	//get a direction vector
+	//	Tucano::Face currTriangle = mesh.getFace(i);
+	//	intersection = rayTriangleIntersection(origin, direction, currTriangle);
+	//	if (intersection.at(0) && intersection.at(1) < t) {
+	//		t = intersection.at(1);
+	//		bestIntersectionTriangleIndex = i;
+	//	}
+	//}
+	//if (bestIntersectionTriangleIndex == -1) {
+	//	return BACKGROUND;
+	//}
 
 	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
 

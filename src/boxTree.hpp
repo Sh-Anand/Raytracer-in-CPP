@@ -27,4 +27,6 @@ public:
 
 	void split();
 
+	std::list<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
+
 };

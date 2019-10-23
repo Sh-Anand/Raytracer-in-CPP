@@ -74,3 +74,23 @@ void BoxTree::split() {
 		}
 	}
 }
+
+// returns the indices of faces that need to be checked by the raytracer
+std::list<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
+	std::list<int> list;
+
+	if (box.boxIntersect(origin, dest)) {
+
+		if (isLeaf) {
+			return faces;
+		}
+
+		else {
+			for (BoxTree child : children) {
+				list.merge(child.intersect(origin, dest));
+			}
+		}
+	}
+
+	return list;
+}

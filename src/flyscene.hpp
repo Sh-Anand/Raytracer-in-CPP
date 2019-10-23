@@ -84,7 +84,6 @@ public:
 
   Tucano::Mesh& getMesh();
 
-  BoxTree initializeOctree();
 
 private:
   // A simple phong shader for rendering meshes
@@ -120,8 +119,11 @@ private:
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
 
-  //Bounding box for the object
+  // Bounding box for the object
   BoundingBox objectBox;
+
+  // Octree containing indices of the faces of our mesh
+  BoxTree octree;
   
   //Visual aid object for a bounding box
   Tucano::Shapes::Box boundingboxVisual;
