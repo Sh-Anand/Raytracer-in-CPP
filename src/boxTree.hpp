@@ -15,6 +15,7 @@ class BoxTree {
 public:
 	BoundingBox box;
 	int capacity;
+	bool isLeaf;
 	std::list<BoxTree> children;
 	std::list<int> faces;
 

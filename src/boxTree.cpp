@@ -3,11 +3,13 @@
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
+	isLeaf = true;
 }
 
 BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	box = BoundingBox::BoundingBox(mesh);
 	this->capacity = capacity;
+	isLeaf = true;
 
 	// loop trough all faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); ++i) {
@@ -21,6 +23,9 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 }
 
 void BoxTree::split() {
+	// the node is now an inner node
+	isLeaf = false;
+
 	// get the difference between min and max for each dimension
 	float dx = (box.getMax.x - box.getMin.x) / 2;
 	float dy = (box.getMax.y - box.getMin.y) / 2;
