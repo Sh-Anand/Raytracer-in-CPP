@@ -1,7 +1,7 @@
 #include "boundingBox.hpp"
 // Must be included before glfw.
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+//#include <GL/glew.h>
+//#include <GLFW/glfw3.h>
 
 
 	/**
