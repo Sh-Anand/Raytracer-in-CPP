@@ -49,7 +49,7 @@ void Flyscene::initialize(int width, int height) {
 
   // set the color and size of the sphere to represent the light sources
   // same sphere is used for all sources
-  lightrep.setColor(Eigen::Vector4f(1.0, 1.0, 0.0, 1.0));
+  lightrep.setColor(Eigen::Vector4f(1.0, 1.0, 1.0, 1.0));
   lightrep.setSize(0.15);
 
   // create a first ray-tracing light source at some random position
@@ -164,9 +164,10 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection =
 			rayTriangleIntersection(screen_pos, dir, currTriangle);
-		if (intersection != std::numeric_limits<float>::min()) {
+		std::cout << "t: " << intersection << endl;
+		if (intersection != std::numeric_limits<float>::max()) {
 			intersected = true;
-			if (intersection < t && intersection >= 0) {
+			if (intersection < t) {
 				t = intersection;
 				riangle = currTriangle;
 			}
@@ -327,14 +328,16 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
+	Tucano::Face currTriangle, intersectTriangle;
 
 	//Loop through all of the faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 		//get a direction vector
-		Tucano::Face currTriangle = mesh.getFace(i);
+		currTriangle = mesh.getFace(i);
 		intersection = rayTriangleIntersection(origin, direction, currTriangle);
-		if (intersection != std::numeric_limits<float>::min() && intersection < t && intersection >= 0) {
+		if (intersection != -72 && intersection < t) {
 			t = intersection;
+			intersectTriangle = currTriangle;
 			bestIntersectionTriangleIndex = i;
 		}
 	}
@@ -342,8 +345,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		return BACKGROUND;
 	}
 
-	Eigen::Vector3f hitPoint = origin + intersection * direction;
-	return phongShade(origin, hitPoint, mesh.getFace(bestIntersectionTriangleIndex));
+	Eigen::Vector3f hitPoint = origin + (t * direction);
+	return phongShade(origin, hitPoint, intersectTriangle);
 	//return BACKGROUND;
 }
 
@@ -358,7 +361,7 @@ float Flyscene::rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f&
 	return t;
 }
 
-//Returns a vector with [0] - 1 or 0 meaning: intersection or not. [1] - t: value of light ray to compare distance 
+//Returns  t parameter of light ray to get point of intersection. 
 float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
 	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
 		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
@@ -366,7 +369,7 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 
 	Eigen::Vector3f triangleNormal = triangle.normal;
 	if (rayDirection.dot(triangleNormal) == 0) {
-		return	std::numeric_limits<float>::min();
+		return	-72;
 	}
 	
 	float t = (triangleNormal.dot(vertices[0]) - rayPoint.dot(triangleNormal)) / rayDirection.dot(triangleNormal);
@@ -389,29 +392,61 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 		return t;
 	}
 	else {
-		return	std::numeric_limits<float>::min();
+		return	-72;
 	}
 
 }
 
+//Computes phong shading at the given point with interpolated normals.
 Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle) {
 
-	Eigen::Vector3f lightIntensity = lightrep.getColor().head<3>();
+	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
+	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
 
-	Eigen::Vector3f lightDirection = (hitPoint -lights.at(0)).normalized();
-	Eigen::Vector3f normal = (mesh.getModelMatrix() * triangle.normal).normalized();
-	float costheta = max(0.0f, normal.dot(lightDirection));
-	Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
+	for (int i = 0; i < lights.size(); i++) {
+		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
+		
+		float costheta = max(0.0f, lightDirection.dot(normal));
+		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
-	Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
-	Eigen::Vector3f eyeToHitPoint = (hitPoint - origin).normalized();
-	float cosphi = max(0.0f,reflectedLight.dot(eyeToHitPoint));
-	Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
+		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
+		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - (mesh.getShapeMatrix() * origin))).normalized();
+		float cosphi = abs(reflectedLight.dot(eyeToHitPoint));
+		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
-	return ambient + diffuse + specular;
+		colour += ambient + diffuse + specular;
+	}
+	return colour;
+}
+
+//Computes the interpolated normal for the given point on the triangle.
+Eigen::Vector3f Flyscene::getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle) {
+	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
+	(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
+	(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[2])).head<3>() };
+	Eigen::Vector3f v0 = vertices[1] - vertices[0];
+	Eigen::Vector3f v1 = vertices[2] - vertices[0];
+	Eigen::Vector3f v2 = trianglePoint - vertices[0];
+	Eigen::Vector3f normalA = mesh.getNormal(triangle.vertex_ids[0]);
+	Eigen::Vector3f normalB = mesh.getNormal(triangle.vertex_ids[1]);
+	Eigen::Vector3f normalC = mesh.getNormal(triangle.vertex_ids[2]);
+
+	float d00 = v0.dot(v0);
+	float d01 = v0.dot(v1);
+	float d11 = v1.dot(v1);
+	float d20 = v2.dot(v0);
+	float d21 = v2.dot(v1);
+	float denom = d00 * d11 - d01 * d01;
+
+	float v = (d11 * d20 - d01 * d21) / denom;
+	float w = (d00 * d21 - d01 * d20) / denom;
+	float u = 1.0f - v - w;
+
+	return u * normalA + v * normalB + w * normalC;
 }
 
 /*
