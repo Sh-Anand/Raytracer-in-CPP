@@ -61,6 +61,8 @@ void Flyscene::initialize(int width, int height) {
   // the debug ray is a cylinder, set the radius and length of the cylinder
   ray.setSize(0.005, 10.0);
 
+  reflectedRay.setSize(0.005, 10.0);
+
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
 
@@ -99,6 +101,8 @@ void Flyscene::paintGL(void) {
 
   // render the scene using OpenGL and one light source
   phong.render(mesh, flycamera, scene_light);
+
+  reflectedRay.render(flycamera, scene_light);
 
   // render the ray and camera representation for ray debug
   ray.render(flycamera, scene_light);
@@ -164,8 +168,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection =
 			rayTriangleIntersection(screen_pos, dir, currTriangle);
-		std::cout << "t: " << intersection << endl;
-		if (intersection != std::numeric_limits<float>::max()) {
+		if (intersection != -72) {
 			intersected = true;
 			if (intersection < t) {
 				t = intersection;
@@ -175,9 +178,36 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	}
 
 	if (intersected) {
-		Eigen::Vector3f p0 = screen_pos + (t * dir);
-		createHitPoint(p0);
-		std::cout <<endl<< materials[riangle.material_id].getShininess();
+		//std::cout <<  endl << "Illuminationmodel: " << materials[riangle.material_id].getIlluminationModel()<<endl;
+		Eigen::Vector3f hitPoint = screen_pos + (t * dir);
+		createHitPoint(hitPoint);
+		Eigen::Vector3f normal = riangle.normal;
+		Eigen::Vector3f reflectionDir = (dir - (2 * (dir.dot(normal)) * normal));
+		std::cout << reflectionDir;
+		reflectedRay.setOriginOrientation(hitPoint, reflectionDir);
+		float intersection_r;
+		bool intersected_r = false;
+		float t_r = std::numeric_limits<float>::max();
+		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+			Tucano::Face currTriangle = mesh.getFace(i);
+			intersection_r =
+				rayTriangleIntersection(hitPoint, reflectionDir, currTriangle);
+			std::cout << "t: " << intersection_r << endl;
+			if (intersection_r != -72 && intersection_r > 0.00001) {
+				intersected_r = true;
+				if (intersection_r < t_r) {
+					t_r = intersection_r;
+				}
+			}
+		}
+
+		Eigen::Vector3f points = hitPoint + 2 * reflectionDir;
+		std::cout << intersected_r;
+		Eigen::Vector3f hitPoint_r = hitPoint + (t_r * reflectionDir);
+		createHitPoint(hitPoint_r);
+		if (intersected_r) {
+			Eigen::Vector3f hitPoint_r = hitPoint + (t_r * reflectionDir);
+		}
 		
 	}
 
@@ -289,7 +319,8 @@ void Flyscene::raytraceScene(int width, int height) {
 			pair<Eigen::Vector3f, Eigen::Vector2f> partition_element;
 			for (int k = 0; k < thread_partition.size(); k++) {
 				partition_element = thread_partition[k];
-				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] = traceRay(origina, partition_element.first);
+				Eigen::Vector3f direction = partition_element.first - origina;
+				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] = traceRay(origina, direction , 0);
 			}
 		};
 		threads.push_back(std::thread(f));
@@ -317,12 +348,13 @@ void Flyscene::raytraceScene(int width, int height) {
 
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &dest) {
+                                   Eigen::Vector3f &direction, int level) {
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
-  
+	
+	if (level == 2)
+		return Eigen::Vector3f(-1, -1, -1);
 
-	Eigen::Vector3f direction = dest - origin;
 
 	int bestIntersectionTriangleIndex = -1;
 	float intersection;
@@ -335,18 +367,60 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		//get a direction vector
 		currTriangle = mesh.getFace(i);
 		intersection = rayTriangleIntersection(origin, direction, currTriangle);
-		if (intersection != -72 && intersection < t) {
+		if (intersection != -72 && intersection < t && intersection > 0.00001) {
 			t = intersection;
 			intersectTriangle = currTriangle;
 			bestIntersectionTriangleIndex = i;
 		}
 	}
 	if (bestIntersectionTriangleIndex == -1) {
-		return BACKGROUND;
+		if (level == 0)
+			return BACKGROUND;
+		return Eigen::Vector3f(-1, -1, -1);
 	}
 
 	Eigen::Vector3f hitPoint = origin + (t * direction);
+	Eigen::Vector3f Color = Eigen::Vector3f(-1,-1,-1);
+	Eigen::Vector3f faceNormal = intersectTriangle.normal;
+
 	return phongShade(origin, hitPoint, intersectTriangle);
+
+	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
+	int imodel = material.getIlluminationModel();
+
+	float fresnelIndex;
+
+	if (imodel > 2 && imodel <= 7) {
+		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
+		Color = traceRay(hitPoint, reflectedDirection, level + 1);
+		if (imodel == 5) {
+			float opticalDensity = material.getOpticalDensity();
+			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
+			return fresnelIndex * Color;
+		}
+	}
+
+	if (imodel == 6 || imodel == 7) {
+		float c1 = direction.dot(faceNormal);
+		if (c1 < 0)
+			faceNormal = -1 * faceNormal;
+		c1 = abs(c1);
+		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
+		Eigen::Vector3f refractedRay = material.getOpticalDensity() * direction + (material.getOpticalDensity() * c1 - c2) * faceNormal;
+		if (imodel == 7) {
+			Color = fresnelIndex * Color + (1-fresnelIndex)* traceRay(hitPoint, refractedRay, level + 1);
+		}
+		else {
+			Color = traceRay(hitPoint, refractedRay, level + 1);
+		}
+	}
+
+	if (Color == Eigen::Vector3f(-1, -1, -1)) {
+		Color = phongShade(origin, hitPoint, intersectTriangle);
+	}
+
+
+	return Color;
 	//return BACKGROUND;
 }
 
@@ -414,8 +488,8 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
 		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
-		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - (mesh.getShapeMatrix() * origin))).normalized();
-		float cosphi = abs(reflectedLight.dot(eyeToHitPoint));
+		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint -  origin)).normalized();
+		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1*reflectedLight));
 		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
 		colour += ambient + diffuse + specular;
@@ -449,6 +523,27 @@ Eigen::Vector3f Flyscene::getInterpolatedNormal(Eigen::Vector3f& trianglePoint, 
 	return u * normalA + v * normalB + w * normalC;
 }
 
+float Flyscene::fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior)
+{
+	float cosi = I.dot(N);
+	float etai = 1, etat = ior;
+	if (cosi > 0) { std::swap(etai, etat); }
+	// Compute sini using Snell's law
+	float sint = etai / etat * sqrtf(std::max(0.f, 1 - cosi * cosi));
+	// Total internal reflection
+	if (sint >= 1) {
+		return 1;
+	}
+	else {
+		float cost = sqrtf(std::max(0.f, 1 - sint * sint));
+		cosi = fabsf(cosi);
+		float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+		float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+		return (Rs * Rs + Rp * Rp) / 2;
+	}
+	// As a consequence of the conservation of energy, transmittance is given by:
+	// kt = 1 - kr;
+}
 /*
 //calculate the numbe rof iterations we make to generate an image
 	total_num_of_rays = (float)(image_size[1] * image_size[0]);

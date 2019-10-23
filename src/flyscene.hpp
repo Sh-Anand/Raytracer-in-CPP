@@ -68,7 +68,9 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level);
+
+  Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
@@ -79,7 +81,8 @@ public:
   Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
-  
+
+  float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
 
 private:
   // A simple phong shader for rendering meshes
