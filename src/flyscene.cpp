@@ -290,7 +290,7 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
 	for (Eigen::Vector3f lightPoint : lights) {
 		lightDirection = trianglePoint - lightPoint;
-		float distance = _CMATH_::pow(lightDirection.x, 2) + _CMATH_::pow(lightDirection.y, 2) + _CMATH_::pow(lightDirection.z, 2);
+		float distance = _CMATH_::pow(lightDirection[0], 2) + _CMATH_::pow(lightDirection[1], 2) + _CMATH_::pow(lightDirection[2], 2);
 		float intensity = 1 / distance;
 		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
 			triangleTest = mesh.getFace(j);
@@ -301,10 +301,10 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 			}
 		}
 	}
-	float x = output.x;
-	float y = output.y;
-	float z = output.z;
+	float x = output[0];
+	float y = output[1];
+	float z = output[2];
 	intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 
-	return intensityFactor * materials[triangle.material_id].getAmbient;
+	return materials[triangle.material_id].getAmbient();
 }
