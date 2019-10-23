@@ -10,6 +10,38 @@
 BoundingBox::BoundingBox(const Eigen::Vector3f &minv, const Eigen::Vector3f &maxv): vmin(minv), vmax(maxv)
 {}
 
+// Create a bounding box around the edges of the mesh, to serve as a root for the tree of boxes
+BoundingBox::BoundingBox(Tucano::Mesh& mesh) {
+
+	// instantiate min and max coordinates as very large and small floats, respectively
+	float xmin = std::numeric_limits<float>::max();
+	float ymin = std::numeric_limits<float>::max();
+	float zmin = std::numeric_limits<float>::max();
+	float xmax = std::numeric_limits<float>::min(); // or set to 0 /origin?
+	float ymax = std::numeric_limits<float>::min();
+	float zmax = std::numeric_limits<float>::min();
+
+	//loop trough the mesh (get each vertex of each face)
+	for (int i = 0; i < mesh.getNumberOfFaces(); ++i) {
+		Tucano::Face face = mesh.getFace(i);    // get current face
+		for (int j = 0; j < face.vertex_ids.size(); ++j) {
+			Eigen::Vector4f vert = mesh.getShapeModelMatrix() * mesh.getVertex(face.vertex_ids[j]); // get current vertex
+			float x = vert.x();
+			float y = vert.y();
+			float z = vert.z();
+			// update min and max values by comparing against current vertex
+			xmin = std::min(xmin, x);
+			ymin = std::min(ymin, y);
+			zmin = std::min(zmin, z);
+			xmax = std::max(xmax, x);
+			ymax = std::max(ymax, y);
+			zmax = std::max(zmax, z);
+		}
+	}
+	vmin = Eigen::Vector3f(xmin, ymin, zmin);
+	vmax = Eigen::Vector3f(xmax, ymax, zmax);
+}
+
 /**
 * @brief Intersection test
 */
@@ -57,3 +89,4 @@ Eigen::Vector3f BoundingBox::getMin() {
 Eigen::Vector3f BoundingBox::getMax() {
 	return vmax;
 }
+

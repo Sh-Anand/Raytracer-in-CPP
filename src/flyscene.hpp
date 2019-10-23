@@ -19,6 +19,7 @@
 
 
 #include "boundingBox.hpp"
+#include "boxTree.hpp"
 
 class Flyscene {
 
@@ -77,11 +78,13 @@ public:
 
   vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
   
-  BoundingBox createRootBox();
-  
   void createHitPoint(Eigen::Vector3f point);
 
   void createBox(Eigen::Vector3f point);
+
+  Tucano::Mesh& getMesh();
+
+  BoxTree initializeTree();
 
 private:
   // A simple phong shader for rendering meshes
