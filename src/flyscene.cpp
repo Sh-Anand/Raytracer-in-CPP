@@ -187,6 +187,8 @@ void Flyscene::raytraceScene(int width, int height) {
       screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
       // launch raytracing for the given ray and write result to pixel data
       pixel_data[i][j] = traceRay(origin, screen_coords);
+	  cout << i << ", " << j << endl;
+
     }
   }
 
@@ -292,13 +294,18 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	vector<float> intersection;
 	Eigen::Vector3f output = Eigen::Vector3f(0.0, 0.0, 0.0);
 	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
+	bool lightHits = true;
+
+	//For loop going through each light
 	for (Eigen::Vector3f lightPoint : lights) {
 		lightDirection = trianglePoint - lightPoint;
 		float distance = calcDistanceV3(lightDirection);
 		float intensity = 1 / distance;
+		lightHits = true;
+
+		//For loop going through the meshes to see if the ray to the light is obstructed breaks at the first obscurement.
 		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
 			triangleTest = mesh.getFace(j);
-			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
 
 			Eigen::Vector3f triangleNormal = triangleTest.normal;
 			Eigen::Vector3f vertices = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
@@ -306,15 +313,22 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 			float t = rayPlaneIntersection(trianglePoint, lightDirection, triangleNormal, vertices);
 			float triangleTestDistance = calcDistanceV3(t * lightDirection - lightPoint);
 
-			cout << triangleTestDistance << " < " << distance << endl;
-
+			//Checking if the object is even between de lightsource and the point
 			if (triangleTestDistance < distance) {
-				cout << " Testing intersection for shadow " << endl;
-				if (intersection[0] && intersection[1] >= 1) {
-					output = output + Eigen::Vector3f(intensity, intensity, intensity);
+
+				intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
+
+				if (intersection[0] == 1) {
+					lightHits = false;
+					break;
 				}
 			}
 		}
+		if (lightHits) {
+			cout << "light hit " << endl;
+			output = output + Eigen::Vector3f(intensity, intensity, intensity);
+		}
+
 	}
 	float x = output[0];
 	float y = output[1];
