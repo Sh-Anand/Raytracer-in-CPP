@@ -362,11 +362,12 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 
 
 
-BoxTree Flyscene::initializeTree() {
-	BoundingBox rootBox = BoundingBox::BoundingBox(getMesh());
-
-	//BoxTree root = BoxTree::BoxTree(rootbox, );
-}
+//BoxTree Flyscene::initializeTree() {
+//	BoundingBox rootBox = BoundingBox::BoundingBox(getMesh());
+//
+//	return rootBox;
+//	//BoxTree root = BoxTree::BoxTree(rootbox, );
+//}
 
 
 

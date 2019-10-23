@@ -214,7 +214,7 @@ void BoundingBox::clasifyFaces(std::vector<unsigned int> rootFaces, Tucano::Mesh
 	this->facesIndexes = finalTrianglesIndex;
 }
 
-void findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c, Eigen::Vector3f& min, Eigen::Vector3f& max) {
+void BoundingBox::findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c, Eigen::Vector3f& min, Eigen::Vector3f& max) {
 	min = Eigen::Vector3f(std::min(a.x(), std::min(b.x(), c.x())),
 		std::min(a.y(), std::min(b.y(), c.y())),
 		std::min(a.z(), std::min(b.z(), c.z())));
@@ -223,7 +223,7 @@ void findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c, Eigen::
 		std::max(a.z(), std::max(b.z(), c.z())));
 }
 
-bool planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eigen::Vector3f maxbox) {
+bool BoundingBox::planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eigen::Vector3f maxbox) {
 	Eigen::Vector3f vmin, vmax;
 	float v;
 	for (int i = 0; i < 3; i++) {
@@ -246,7 +246,7 @@ bool planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eigen::Vector
 }
 
 /*======================== X-tests ========================*/
-bool axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
+bool BoundingBox::axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
 	const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize) {
 	float p0 = a * v0.y() - b * v0.z();
 	float p2 = a * v2.y() - b * v2.z();
@@ -261,7 +261,7 @@ bool axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0
 	return true;
 }
 
-bool axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+bool BoundingBox::axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize) {
 	float p0 = a * v0.y() - b * v0.z();
 	float p1 = a * v1.y() - b * v1.z();
@@ -276,7 +276,7 @@ bool axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	return true;
 }
 /*======================== Y-tests ========================*/
-bool axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+bool BoundingBox::axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize) {
 	float p0 = -a * v0.x() + b * v0.z();
 	float p1 = -a * v1.x() + b * v1.z();
@@ -291,7 +291,7 @@ bool axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	return true;
 }
 
-bool axisTestY02(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
+bool BoundingBox::axisTestY02(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
 	const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize) {
 	float p0 = -a * v0.x() + b * v0.z();
 	float p2 = -a * v2.x() + b * v2.z();
@@ -307,7 +307,7 @@ bool axisTestY02(float a, float b, float fa, float fb, const Eigen::Vector3f& v0
 }
 
 /*======================== Z-tests ========================*/
-bool axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+bool BoundingBox::axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize) {
 	float p0 = a * v0.x() - b * v0.y();
 	float p1 = a * v1.x() - b * v1.y();
@@ -322,7 +322,7 @@ bool axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 	return true;
 }
 
-bool axisTestZ12(float a, float b, float fa, float fb, const Eigen::Vector3f& v1,
+bool BoundingBox::axisTestZ12(float a, float b, float fa, float fb, const Eigen::Vector3f& v1,
 	const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize) {
 	float p1 = a * v1.x() - b * v1.y();
 	float p2 = a * v2.x() - b * v2.y();
