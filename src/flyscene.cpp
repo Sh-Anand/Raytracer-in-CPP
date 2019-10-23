@@ -171,14 +171,14 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	vector<float> intersection;
 
 
-	// uncomment to check boxIntersection method:
+	// check whether the debug ray hits the (root) bounding box
 	bool hitBox = objectBox.boxIntersect(flycamera.getCenter(), screen_pos);
-
 
 	bool intersected = false;
 	float t = std::numeric_limits<float>::max();
 
 	if(hitBox) {
+		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
 		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 			Tucano::Face currTriangle = mesh.getFace(i);
 			intersection =
@@ -188,12 +188,12 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 				if (intersection.at(1) < t) {
 					t = intersection.at(1);
 				}
+				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
 			}
 		}
-		ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 	}
 	else {
-		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
 	}
 
 	if (intersected) {
@@ -270,9 +270,14 @@ void Flyscene::raytraceScene(int width, int height) {
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
-  // just some fake random color per pixel until you implement your ray tracing
-  // remember to return your RGB values as floats in the range [0, 1]!!!
   
+	//Check whether the ray hits the (root) bounding box
+	bool hitBox = objectBox.boxIntersect(origin, dest);
+
+	//No hit? Then return background. No need to check individual triangles!
+	if (!hitBox) {
+		return BACKGROUND;
+	}
 
 	Eigen::Vector3f direction = dest - origin;
 
