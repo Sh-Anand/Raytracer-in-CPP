@@ -15,10 +15,15 @@ class BoxTree {
 public:
 	BoundingBox box;
 	std::list<BoxTree> children;
-	std::list<Tucano::Face> faces;
+	int triangleLimit;
+	
 
 	BoxTree(void) {};
 
-	BoxTree(BoundingBox box, std::list<BoxTree> children, std::list<Tucano::Face> faces);
+	//create root
+	BoxTree(BoundingBox box);
+
+	//create childrean
+	BoxTree(BoundingBox box, std::list<BoxTree> children);
 
 };

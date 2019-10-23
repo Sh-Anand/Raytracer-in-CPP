@@ -1,7 +1,12 @@
 #include "boxTree.hpp"
 
-BoxTree::BoxTree(BoundingBox box, std::list<BoxTree> children, std::list<Tucano::Face> faces) {
+
+BoxTree::BoxTree(BoundingBox box) {
+
+}
+
+
+BoxTree::BoxTree(BoundingBox box, std::list<BoxTree> children) {
 	this->box = box;
 	this->children = children;
-	this->faces = faces;
 }
