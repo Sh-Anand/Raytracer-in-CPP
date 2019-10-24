@@ -468,8 +468,8 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 //Computes phong shading at the given point with interpolated normals.
 Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle) {
 
-	Eigen::Vector3f lightIntensity = calculateShadow(origin, triangle);
-	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f lightIntensity = calculateShadow(hitPoint, triangle);
+	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(1.0, 1.0, 1.0);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
@@ -585,11 +585,15 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
 	bool lightHits = true;
 
+	float distance = 0.f;
+	float intensity = 0.f;
+
 	//For loop going through each light
 	for (Eigen::Vector3f lightPoint : lights) {
 		lightDirection = trianglePoint - lightPoint;
-		float distance = calcDistanceV3(lightDirection);
-		float intensity = 1 / distance;
+
+		distance = calcDistanceV3(lightDirection);
+		intensity = 1 / distance;
 		lightHits = true;
 
 		//For loop going through the meshes to see if the ray to the light is obstructed breaks at the first obscurement.
