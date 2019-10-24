@@ -353,6 +353,5 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 	float z = output[2];
 	intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
 
-	//return materials[triangle.material_id].getAmbient();
 	return intensityFactor;
 }
