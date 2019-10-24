@@ -68,7 +68,7 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level, vector<Eigen::Vector3f>& lights);
 
   Eigen::Vector3f traceLightRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
@@ -82,11 +82,13 @@ public:
 
   void createHitPoint(Eigen::Vector3f& point);
 
-  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
 
   float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
+
+  bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights);
 
 private:
   // A simple phong shader for rendering meshes
