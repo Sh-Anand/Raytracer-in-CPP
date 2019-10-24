@@ -1,5 +1,6 @@
 #include "boxTree.hpp"
 
+<<<<<<< HEAD
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
@@ -93,4 +94,15 @@ std::list<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Ve
 	}
 
 	return list;
+=======
+
+BoxTree::BoxTree(BoundingBox box) {
+
+}
+
+
+BoxTree::BoxTree(BoundingBox box, std::list<BoxTree> children) {
+	this->box = box;
+	this->children = children;
+>>>>>>> triangleClassifier
 }
