@@ -44,8 +44,8 @@ void Flyscene::initialize(int width, int height) {
   glEnable(GL_DEPTH_TEST);
 
   // uncomment when boxTree class is fully implemented:
-  // int capacity = max(5, mesh.getNumberOfFaces()/100);
-  // octree = BoxTree::BoxTree(getMesh(), capacity);
+   int capacity = max(5, mesh.getNumberOfFaces()/100);
+   octree = BoxTree::BoxTree(getMesh(), capacity);
 
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
   //   Tucano::Face face = mesh.getFace(i);    

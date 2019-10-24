@@ -26,9 +26,9 @@ void BoxTree::split() {
 	isLeaf = false;
 
 	// get half of the difference between min and max for each dimension
-	float dx = (box.getMax.x - box.getMin.x) / 2;
-	float dy = (box.getMax.y - box.getMin.y) / 2;
-	float dz = (box.getMax.z - box.getMin.z) / 2;
+	float dx = (box.getMax().x() - box.getMin().x()) / 2;
+	float dy = (box.getMax().y() - box.getMin().y()) / 2;
+	float dz = (box.getMax().z() - box.getMin().z()) / 2;
 
 	// pass the difference into a 3D vector
 	Eigen::Vector3f vx = Eigen::Vector3f(dx, 0, 0);
@@ -36,14 +36,14 @@ void BoxTree::split() {
 	Eigen::Vector3f vz = Eigen::Vector3f(0, 0, dz);
 
 	// compute the 8 child nodes
-	BoundingBox b000 = BoundingBox::BoundingBox(box.getMin, box.getMin + vx + vy + vz);
-	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin + vz, box.getMin + vx + vy + 2*vz);
-	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin + vy, box.getMin + vx +2*vy + vz);
-	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin + vy + vz, box.getMax -vx );
-	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin + vx, box.getMin + 2*vx + vy + vz);
-	BoundingBox b101 = BoundingBox::BoundingBox(box.getMin + vx + vz, box.getMax - vy);
-	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin + vz + vy, box.getMax - vz);
-	BoundingBox b111 = BoundingBox::BoundingBox(box.getMin + vx + vy + vz, box.getMax);
+	BoundingBox b000 = BoundingBox::BoundingBox(box.getMin(), box.getMin() + vx + vy + vz);
+	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin() + vz, box.getMin() + vx + vy + 2*vz);
+	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin() + vy, box.getMin() + vx +2*vy + vz);
+	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin() + vy + vz, box.getMax() -vx );
+	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin() + vx, box.getMin() + 2*vx + vy + vz);
+	BoundingBox b101 = BoundingBox::BoundingBox(box.getMin() + vx + vz, box.getMax() - vy);
+	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin() + vz + vy, box.getMax() - vz);
+	BoundingBox b111 = BoundingBox::BoundingBox(box.getMin() + vx + vy + vz, box.getMax());
 
 	// add the children to the parent node
 	children.push_back(BoxTree::BoxTree(b000, capacity));
