@@ -165,7 +165,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection =
 			rayTriangleIntersection(screen_pos, dir, currTriangle);
-		std::cout << "t: " << intersection << endl;
+		//std::cout << "t: " << intersection << endl;
 		if (intersection != std::numeric_limits<float>::max()) {
 			intersected = true;
 			if (intersection < t) {
@@ -178,7 +178,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	if (intersected) {
 		Eigen::Vector3f p0 = screen_pos + (t * dir);
 		createHitPoint(p0);
-		std::cout <<endl<< materials[riangle.material_id].getShininess();
+		//std::cout <<endl<< materials[riangle.material_id].getShininess();
 		
 	}
 	else {
@@ -261,7 +261,7 @@ void Flyscene::raytraceScene(int width, int height) {
 	int total_pixels = image_size[0] * image_size[1];
 	int partition_size = ceil(total_pixels / num_threads);
 	int counter = 0;
-	std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
+	//std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
 	
 
 	vector<vector<pair<Eigen::Vector3f, Eigen::Vector2f>>> partitions;
@@ -280,6 +280,7 @@ void Flyscene::raytraceScene(int width, int height) {
 				partition.clear();
 			}
 		}
+		//cout << i + "," + image_size[0] << endl;
 	}
 	vector<std::thread> threads;
 	for (int id = 0; id < partitions.size(); id++) {
@@ -320,8 +321,6 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
-  
-
 	Eigen::Vector3f direction = dest - origin;
 
 	int bestIntersectionTriangleIndex = -1;
@@ -341,16 +340,15 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 			bestIntersectionTriangleIndex = i;
 		}
 	}
-
+	Eigen::Vector3f hitPoint = origin + (t * direction);
+	
 	if (bestIntersectionTriangleIndex == -1) {
 		return BACKGROUND;
-	}
-	else if (calculateShadow(origin+ t*direction, mesh.getFace(bestIntersectionTriangleIndex))) {
+	} else if (calculateShadow(hitPoint, t, mesh.getFace(bestIntersectionTriangleIndex))) {
 		return SHADOW;
 	}
-	
-	Eigen::Vector3f hitPoint = origin + (t * direction);
-	return phongShade(origin, hitPoint, intersectTriangle);
+	//return phongShade(origin, hitPoint, intersectTriangle);
+	return Eigen::Vector3f(1.f, 1.f, 1.f);
 }
 
 // Returns parameter t of r = o + td   of the ray that intersects the plane
@@ -363,7 +361,7 @@ float Flyscene::rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f&
 	return t;
 }
 
-//Returns  t parameter of light ray to get point of intersection. 
+//Returns t parameter of light ray to get point of intersection. 
 float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
 	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
 		(mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[1])).head<3>(),
@@ -482,22 +480,40 @@ Eigen::Vector3f Flyscene::getInterpolatedNormal(Eigen::Vector3f& trianglePoint, 
 	done_ray_tracing = true;
 
 	progressBarThread.join();*/
+
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
-bool Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
+bool Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, float t, Tucano::Face triangle) {
 	
 	Tucano::Face triangleTest;
 	Eigen::Vector3f lightDirection;
-	vector<float> intersection;
+	Tucano::Face currTriangle, intersectTriangle;
+	float t2 = std::numeric_limits<float>::max();
+	int curr, bit = -1;
+
+	////vector<float> t;
+	//for (Eigen::Vector3f lightPoint : lights) {
+	//	lightDirection = trianglePoint - lightPoint;
+	//	for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
+	//		triangleTest = mesh.getFace(j);
+	//		curr = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
+	//		if (curr <= tmin) {
+	//			tmin = curr;
+	//		}
+	//	}
+	//}
 	for (Eigen::Vector3f lightPoint : lights) {
-		lightDirection = trianglePoint - lightPoint;
-		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
-			triangleTest = mesh.getFace(j);
-			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
-			if (intersection[0] && intersection[1] >= 1) {
+	//Loop through all of the faces
+		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+			lightDirection = trianglePoint - lightPoint;
+			//get a direction vector
+			currTriangle = mesh.getFace(i);
+			t2 = rayTriangleIntersection(lightPoint, lightDirection, currTriangle);
+			if (t2 != -72 && t2 < t) {
 				return false;
 			}
 		}
 	}
+
 	return true;
 }

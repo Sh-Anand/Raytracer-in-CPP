@@ -79,9 +79,8 @@ public:
   Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
-  
 
-  bool calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
+  bool calculateShadow(Eigen::Vector3f trianglePoint, float t, Tucano::Face triangle);
 
 private:
   // A simple phong shader for rendering meshes
