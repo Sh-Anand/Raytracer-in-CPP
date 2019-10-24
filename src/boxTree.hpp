@@ -29,4 +29,28 @@ public:
 
 	std::list<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 
+	//fill in faces
+	bool clasifyFace(int faceIndex, Tucano::Mesh& mesh);
+
+	std::pair<Eigen::Vector3f, Eigen::Vector3f> findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c);
+
+	bool planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eigen::Vector3f maxbox);
+
+	bool axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
+		const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize);
+
+	bool axisTestY02(float a, float b, float fa, float fb, const Eigen::Vector3f& v0,
+		const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize);
+
+	bool axisTestZ12(float a, float b, float fa, float fb, const Eigen::Vector3f& v1,
+		const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize);
+
+	bool axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
+
+	bool axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
+
+	bool axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
 };
