@@ -4,12 +4,14 @@ BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
 	isLeaf = true;
+	isEmpty = false;
 }
 
 BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	box = BoundingBox::BoundingBox(mesh);
 	this->capacity = capacity;
 	isLeaf = true;
+	isEmpty = false;
 
 	// add all indices to list of faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); ++i) {
@@ -69,6 +71,9 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 
 	// and repeat the same process for all children
 	for (BoxTree child : children) {
+		if (child.faces.empty() && child.children.empty()) {
+			isEmpty = true;
+		}
 		if (child.faces.size() > child.capacity) {
 			child.split(meshRef);
 		}
