@@ -1,8 +1,19 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
 #include <math.h>
+#include<iostream>
+#include <thread>
+#include <mutex>
+#include <ctime>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 //#define SHADOW Eigen::Vector3f(0.0, 0.0, 0.0)
+float progress;
+float total_num_of_rays;
+unsigned int ray_done_counter;
+bool done_ray_tracing;
+std::mutex mtx;           // mutex for critical section
+clock_t startTime;
+clock_t endTime;
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -163,7 +174,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 void Flyscene::raytraceScene(int width, int height) {
   std::cout << "ray tracing ..." << std::endl;
-
+  auto start = std::chrono::high_resolution_clock::now();
   // if no width or height passed, use dimensions of current viewport
   Eigen::Vector2i image_size(width, height);
   if (width == 0 || height == 0) {
@@ -194,6 +205,13 @@ void Flyscene::raytraceScene(int width, int height) {
 
   // write the ray tracing result to a PPM image
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
+
+  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+
+  std::cout << "ray tracing done! " << std::endl;
+
+  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
+
   std::cout << "ray tracing done! " << std::endl;
 }
 
