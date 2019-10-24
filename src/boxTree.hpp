@@ -9,6 +9,7 @@
 
 #include "boundingBox.hpp"
 #include <list>
+#include <queue>
 #include <tucano/mesh.hpp>
 
 class BoxTree {

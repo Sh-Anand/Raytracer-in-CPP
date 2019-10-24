@@ -3,14 +3,14 @@
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
-	isLeaf = true;
+	isLeaf = false;
 	isEmpty = false;
 }
 
 BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	box = BoundingBox::BoundingBox(mesh);
 	this->capacity = capacity;
-	isLeaf = true;
+	isLeaf = false;
 	isEmpty = false;
 
 	// add all indices to list of faces
@@ -72,7 +72,10 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 	// and repeat the same process for all children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
 		if (children.at(boxIndex).faces.empty() && children.at(boxIndex).children.empty()) {
-			isEmpty = true;
+			children.at(boxIndex).isEmpty = true;
+		}
+		if (children.at(boxIndex).faces.size() < children.at(boxIndex).capacity) {
+			children.at(boxIndex).isLeaf = true;
 		}
 		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity) {
 			children.at(boxIndex).split(meshRef);
@@ -84,7 +87,24 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 std::vector<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
 	std::vector<int> list;
 
-	if (box.boxIntersect(origin, dest)) {
+	std::queue<BoxTree> toVisit;
+	toVisit.push(*this);
+	while (!toVisit.empty()) {
+		BoxTree currentBoxTree = toVisit.front();
+		toVisit.pop();
+		if (currentBoxTree.isLeaf && currentBoxTree.box.boxIntersect(origin, dest) && !currentBoxTree.isEmpty) {
+			list.insert(list.end(), currentBoxTree.faces.begin(), currentBoxTree.faces.end());
+		}
+		else {
+			for (BoxTree tree : currentBoxTree.children) {
+				if (!tree.isEmpty && tree.box.boxIntersect(origin, dest)) {
+					toVisit.push(tree);
+				}
+			}
+		}
+		
+	}
+	/*if (box.boxIntersect(origin, dest)) {
 
 		if (isLeaf) {
 			return faces;
@@ -98,7 +118,7 @@ std::vector<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::
 				}
 			}
 		}
-	}
+	}*/
 
 	return list;
 }

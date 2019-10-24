@@ -279,7 +279,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
   
 	//Check whether the ray hits the (root) bounding box
-	bool hitBox = objectBox.boxIntersect(origin, dest);
+	bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
 
 	//No hit? Then return background. No need to check individual triangles!
 	if (!hitBox) {
@@ -292,6 +292,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	vector<float> intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
+
+
 
 	std::vector<int> faces = octree.intersect(origin, dest);
 	
