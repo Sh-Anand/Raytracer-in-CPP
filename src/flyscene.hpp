@@ -15,6 +15,7 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
+#include <thread>
 
 class Flyscene {
 
@@ -67,17 +68,27 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level);
 
   Eigen::Vector3f traceLightRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
-  void createHitPoint(Eigen::Vector3f point);
 
   float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
+  Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
 
-  vector<float> rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+  float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
   Eigen::Vector3f calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
+
+  float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+
+  void createHitPoint(Eigen::Vector3f& point);
+
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
+
+  Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
+
+  float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
 
 private:
   // A simple phong shader for rendering meshes
@@ -112,6 +123,8 @@ private:
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+
+  vector<vector<Eigen::Vector3f>> pixel_data;
 };
 
 #endif // FLYSCENE
