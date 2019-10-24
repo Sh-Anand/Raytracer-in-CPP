@@ -16,6 +16,7 @@ public:
 	BoundingBox box;
 	int capacity;
 	bool isLeaf;
+	bool isEmpty;
 	std::list<BoxTree> children;
 	std::list<int> faces;
 
@@ -25,7 +26,7 @@ public:
 
 	BoxTree(Tucano::Mesh& mesh, int capacity);
 
-	void split();
+	void split(Tucano::Mesh& meshRef);
 
 	std::list<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 

@@ -17,11 +17,11 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	}
 
 	if (faces.size() > capacity) {
-		split();
+		split(mesh);
 	}
 }
 
-void BoxTree::split() {
+void BoxTree::split(Tucano::Mesh& meshRef) {
 	// the node is now an inner node
 	isLeaf = false;
 
@@ -60,16 +60,13 @@ void BoxTree::split() {
 	// distribute the faces of the parent node over the children
 	for (BoxTree child : children) {
 		for (int i : faces) {
-			// TODO: check whether the face intersects the bounding box of the child.
-			//		If it does, add the face to the list of faces of that child.
+			if (clasifyFace(i, meshRef)) {
+				child.faces.push_back(i);
+			}
 		}
 		if (child.faces.empty()) {
 			toRemove.push_back(child);
 		}
-	}
-
-	for (BoxTree node : toRemove) {
-		children.remove(node);
 	}
 
 	// now finally empy the list of faces of the parent node (since this is an inner node)
@@ -79,7 +76,7 @@ void BoxTree::split() {
 	// and repeat the same process for all children
 	for (BoxTree child : children) {
 		if (child.faces.size() > child.capacity) {
-			child.split();
+			child.split(meshRef);
 		}
 	}
 }
