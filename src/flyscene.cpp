@@ -44,7 +44,7 @@ void Flyscene::initialize(int width, int height) {
   glEnable(GL_DEPTH_TEST);
 
   // uncomment when boxTree class is fully implemented:
-   int capacity = max(5, mesh.getNumberOfFaces()/100);
+  int capacity = (int)(mesh.getNumberOfFaces() * 0.20); //max(5, mesh.getNumberOfFaces()/100);
    octree = BoxTree::BoxTree(getMesh(), capacity);
 
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
@@ -293,7 +293,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
 
-	std::list<int> faces = octree.intersect(origin, dest);
+	std::vector<int> faces = octree.intersect(origin, dest);
 	
 	//Loop through the reduced list of faces
 	for (int i : faces) {

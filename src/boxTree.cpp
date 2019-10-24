@@ -19,7 +19,7 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	}
 
 	if (faces.size() > capacity) {
-		split(mesh);
+		this->split(mesh);
 	}
 }
 
@@ -58,31 +58,31 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 	children.push_back(BoxTree::BoxTree(b111, capacity));
 	
 	// distribute the faces of the parent node over the children
-	for (BoxTree child : children) {
+	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
 		for (int i : faces) {
-			if (clasifyFace(i, meshRef)) {
-				child.faces.push_back(i);
+			if (children.at(boxIndex).clasifyFace(i, meshRef)) {
+				children.at(boxIndex).faces.push_back(i);
 			}
 		}
 	}
 
 	// now finally empy the list of faces of the parent node (since this is an inner node)
-	faces.clear();
+	//faces.clear();
 
 	// and repeat the same process for all children
-	for (BoxTree child : children) {
-		if (child.faces.empty() && child.children.empty()) {
+	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
+		if (children.at(boxIndex).faces.empty() && children.at(boxIndex).children.empty()) {
 			isEmpty = true;
 		}
-		if (child.faces.size() > child.capacity) {
-			child.split(meshRef);
+		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity) {
+			children.at(boxIndex).split(meshRef);
 		}
 	}
 }
 
 // returns the indices of faces that need to be checked by the raytracer
-std::list<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
-	std::list<int> list;
+std::vector<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
+	std::vector<int> list;
 
 	if (box.boxIntersect(origin, dest)) {
 
@@ -92,7 +92,10 @@ std::list<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Ve
 
 		else {
 			for (BoxTree child : children) {
-				list.merge(child.intersect(origin, dest));
+				if (child.isEmpty) {
+					std::vector<int> intersected = child.intersect(origin, dest);
+					list.insert(list.end(), intersected.begin(), intersected.end());
+				}
 			}
 		}
 	}
@@ -163,13 +166,13 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fez = fabsf(e_0.z());
 
 		if (!axisTestX01(e_0.z(), e_0.y(), fez, fey, A_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestY02(e_0.z(), e_0.x(), fez, fex, A_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestZ12(e_0.y(), e_0.x(), fey, fex, B_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 
 		fex = fabsf(e_1.x());
@@ -177,13 +180,13 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fez = fabsf(e_1.z());
 
 		if (!axisTestX01(e_1.z(), e_1.y(), fez, fey, A_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestY02(e_1.z(), e_1.x(), fez, fex, A_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestZ0(e_1.y(), e_1.x(), fey, fex, A_origin, B_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 
 		fex = fabsf(e_2.x());
@@ -191,13 +194,13 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fez = fabsf(e_2.z());
 
 		if (!axisTestX2(e_2.z(), e_2.y(), fez, fey, A_origin, B_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestY1(e_2.z(), e_2.x(), fez, fex, A_origin, B_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 		if (!axisTestZ12(e_2.y(), e_2.x(), fey, fex, B_origin, C_origin, boxhalfsize)) {
-			return true;
+			return false;
 		}
 
 		pair<Eigen::Vector3f, Eigen::Vector3f> minMaxPair = findMinMax(A_origin, B_origin, C_origin);
@@ -209,15 +212,15 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 
 		/* test in X-direction */
 		if (min.x() > boxhalfsize.x() || max.x() < -boxhalfsize.x()) {
-			return true;
+			return false;
 		}
 		/* test in Y-direction */
 		if (min.y() > boxhalfsize.y() || max.y() < -boxhalfsize.y()) {
-			return true;
+			return false;
 		}
 		/* test in Z-direction */
 		if (min.z() > boxhalfsize.z() || max.z() < -boxhalfsize.z()) {
-			return true;
+			return false;
 		}
 		Eigen::Vector3f normal = e_0.cross(e_1);
 		if (!planeBoxOverlap(normal, A_origin, boxhalfsize)) {

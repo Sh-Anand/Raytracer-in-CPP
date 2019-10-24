@@ -17,8 +17,8 @@ public:
 	int capacity;
 	bool isLeaf;
 	bool isEmpty;
-	std::list<BoxTree> children;
-	std::list<int> faces;
+	std::vector<BoxTree> children;
+	std::vector<int> faces;
 
 	BoxTree(void) {}
 
@@ -28,7 +28,7 @@ public:
 
 	void split(Tucano::Mesh& meshRef);
 
-	std::list<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
+	std::vector<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 
 	//fill in faces
 	bool clasifyFace(int faceIndex, Tucano::Mesh& mesh);
