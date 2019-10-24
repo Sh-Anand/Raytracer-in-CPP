@@ -87,11 +87,13 @@ xcopy "$(SolutionDir)dependencies\glew\bin\win\x64" "$(OutputPath)" /y /i</Comma
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\boundingBox.cpp" />
+    <ClCompile Include="src\boxTree.cpp" />
     <ClCompile Include="src\flyscene.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\boundingBox.hpp" />
+    <ClInclude Include="src\boxTree.hpp" />
     <ClInclude Include="src\flyscene.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

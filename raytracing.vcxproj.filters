@@ -24,12 +24,18 @@
     <ClCompile Include="src\boundingBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\boxTree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\flyscene.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\boundingBox.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\boxTree.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
