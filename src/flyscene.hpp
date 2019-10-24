@@ -72,8 +72,6 @@ public:
 
   Eigen::Vector3f traceLightRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
 
-
-  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
   Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);

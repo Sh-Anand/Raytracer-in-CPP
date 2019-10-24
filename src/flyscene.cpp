@@ -7,6 +7,7 @@
 #include <ctime>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 //#define SHADOW Eigen::Vector3f(0.0, 0.0, 0.0)
+// Fields for the progress bar
 float progress;
 float total_num_of_rays;
 unsigned int ray_done_counter;
@@ -17,14 +18,6 @@ clock_t endTime;
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
 
-// Fields for the progress bar
-float progress;
-float total_num_of_rays;
-unsigned int ray_done_counter;
-bool done_ray_tracing;
-std::mutex mtx;           // mutex for critical section
-clock_t startTime;
-clock_t endTime;
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
@@ -44,7 +37,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/dodgeColorTest.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -187,12 +180,10 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	}
 
 	if (intersected) {
-		//std::cout <<  endl << "Illuminationmodel: " << materials[riangle.material_id].getIlluminationModel()<<endl;
 		Eigen::Vector3f hitPoint = screen_pos + (t * dir);
 		createHitPoint(hitPoint);
 		Eigen::Vector3f normal = riangle.normal;
 		Eigen::Vector3f reflectionDir = (dir - (2 * (dir.dot(normal)) * normal));
-		std::cout << reflectionDir;
 		reflectedRay.setOriginOrientation(hitPoint, reflectionDir);
 		float intersection_r;
 		bool intersected_r = false;
@@ -201,7 +192,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 			Tucano::Face currTriangle = mesh.getFace(i);
 			intersection_r =
 				rayTriangleIntersection(hitPoint, reflectionDir, currTriangle);
-			std::cout << "t: " << intersection_r << endl;
 			if (intersection_r != -72 && intersection_r > 0.00001) {
 				intersected_r = true;
 				if (intersection_r < t_r) {
@@ -211,7 +201,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		}
 
 		Eigen::Vector3f points = hitPoint + 2 * reflectionDir;
-		std::cout << intersected_r;
 		Eigen::Vector3f hitPoint_r = hitPoint + (t_r * reflectionDir);
 		createHitPoint(hitPoint_r);
 		if (intersected_r) {
@@ -274,11 +263,6 @@ void Flyscene::raytraceScene(int width, int height) {
 	progress = 0.0f;
 	ray_done_counter = 0;
 	////////////////////////
-  Eigen::Vector2i image_size(width, height);
-  if (width == 0 || height == 0) {
-    image_size = flycamera.getViewportSize();
-  }
-
 
 	// if no width or height passed, use dimensions of current viewport
 	Eigen::Vector2i image_size(width, height);
@@ -303,7 +287,6 @@ void Flyscene::raytraceScene(int width, int height) {
 	int total_pixels = image_size[0] * image_size[1];
 	int partition_size = ceil(total_pixels / num_threads);
 	int counter = 0;
-	std::cout << num_threads << endl << total_pixels << endl << partition_size << endl;
 	
 
 	vector<vector<pair<Eigen::Vector3f, Eigen::Vector2f>>> partitions;
@@ -356,12 +339,6 @@ void Flyscene::raytraceScene(int width, int height) {
 
 	std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
 }
-
-Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
-	Eigen::Vector3f& dest) {
-	// just some fake random color per pixel until you implement your ray tracing
-	// remember to return your RGB values as floats in the range [0, 1]!!!
-
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &direction, int level) {
@@ -602,7 +579,7 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 
 	Tucano::Face triangleTest;
 	Eigen::Vector3f lightDirection;
-	vector<float> intersection;
+	float intersection;
 	Eigen::Vector3f output = Eigen::Vector3f(0.0, 0.0, 0.0);
 	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
 	bool lightHits = true;
@@ -620,7 +597,7 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 
 			Eigen::Vector3f triangleNormal = triangleTest.normal;
 			Eigen::Vector3f vertices = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
-
+				
 			float t = rayPlaneIntersection(trianglePoint, lightDirection, triangleNormal, vertices);
 			float triangleTestDistance = calcDistanceV3(t * lightDirection - lightPoint);
 
@@ -629,14 +606,14 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 
 				intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
 
-				if (intersection[0] == 1) {
+				if (intersection != -72) {
 					lightHits = false;
 					break;
 				}
 			}
 		}
 		if (lightHits) {
-			cout << "light hit " << endl;
+			//cout << "light hit " << endl;
 			output = output + Eigen::Vector3f(intensity, intensity, intensity);
 		}
 
