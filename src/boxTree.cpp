@@ -1,6 +1,5 @@
 #include "boxTree.hpp"
 
-<<<<<<< HEAD
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
@@ -12,10 +11,9 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	this->capacity = capacity;
 	isLeaf = true;
 
-	// loop trough all faces
+	// add all indices to list of faces
 	for (int i = 0; i < mesh.getNumberOfFaces(); ++i) {
-		Tucano::Face face = mesh.getFace(i);    // get current face
-		// TODO: if a face intersects or lies within the bounding box, append its ID to the list of faces
+		faces.push_back(i);
 	}
 
 	if (faces.size() > capacity) {
@@ -27,7 +25,7 @@ void BoxTree::split() {
 	// the node is now an inner node
 	isLeaf = false;
 
-	// get the difference between min and max for each dimension
+	// get half of the difference between min and max for each dimension
 	float dx = (box.getMax.x - box.getMin.x) / 2;
 	float dy = (box.getMax.y - box.getMin.y) / 2;
 	float dz = (box.getMax.z - box.getMin.z) / 2;
@@ -70,6 +68,9 @@ void BoxTree::split() {
 
 	// and repeat the same process for all children
 	for (BoxTree child : children) {
+		if (child.faces.empty()) {
+			children.remove(child);
+		}
 		if (child.faces.size() > child.capacity) {
 			child.split();
 		}
@@ -94,15 +95,4 @@ std::list<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Ve
 	}
 
 	return list;
-=======
-
-BoxTree::BoxTree(BoundingBox box) {
-
-}
-
-
-BoxTree::BoxTree(BoundingBox box, std::list<BoxTree> children) {
-	this->box = box;
-	this->children = children;
->>>>>>> triangleClassifier
 }

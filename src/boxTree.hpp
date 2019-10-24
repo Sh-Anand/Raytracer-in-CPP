@@ -17,16 +17,10 @@ public:
 	int capacity;
 	bool isLeaf;
 	std::list<BoxTree> children;
-<<<<<<< HEAD
 	std::list<int> faces;
-=======
-	int triangleLimit;
-	
->>>>>>> triangleClassifier
 
 	BoxTree(void) {}
 
-<<<<<<< HEAD
 	BoxTree(BoundingBox box, int capacity);
 
 	BoxTree(Tucano::Mesh& mesh, int capacity);
@@ -34,12 +28,5 @@ public:
 	void split();
 
 	std::list<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
-=======
-	//create root
-	BoxTree(BoundingBox box);
-
-	//create childrean
-	BoxTree(BoundingBox box, std::list<BoxTree> children);
->>>>>>> triangleClassifier
 
 };

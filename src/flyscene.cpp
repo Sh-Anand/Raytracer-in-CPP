@@ -380,9 +380,4 @@ vector<float> Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen
 	return result;
 }
 
-												
-
-
-
-
-
+											
