@@ -54,8 +54,6 @@ void BoxTree::split() {
 	children.push_back(BoxTree::BoxTree(b101, capacity));
 	children.push_back(BoxTree::BoxTree(b110, capacity));
 	children.push_back(BoxTree::BoxTree(b111, capacity));
-
-	std::list<BoxTree> toRemove;
 	
 	// distribute the faces of the parent node over the children
 	for (BoxTree child : children) {
@@ -63,18 +61,10 @@ void BoxTree::split() {
 			// TODO: check whether the face intersects the bounding box of the child.
 			//		If it does, add the face to the list of faces of that child.
 		}
-		if (child.faces.empty()) {
-			toRemove.push_back(child);
-		}
-	}
-
-	for (BoxTree node : toRemove) {
-		children.remove(node);
 	}
 
 	// now finally empy the list of faces of the parent node (since this is an inner node)
 	faces.clear();
-
 
 	// and repeat the same process for all children
 	for (BoxTree child : children) {
