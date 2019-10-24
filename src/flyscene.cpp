@@ -37,7 +37,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/dodgeColorTest.obj");
+                                    "resources/models/cube.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -468,7 +468,8 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 //Computes phong shading at the given point with interpolated normals.
 Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle) {
 
-	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
+	Eigen::Vector3f lightIntensity = calculateShadow(origin, triangle);
+	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(0.0, 0.0, 0.0);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
