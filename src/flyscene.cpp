@@ -36,7 +36,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/untitled1.obj");
+                                    "resources/models/glassstraw.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -383,7 +383,10 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Eigen::Vector3f hitPoint = origin + (t * direction);
 	Eigen::Vector3f Color = Eigen::Vector3f(-1,-1,-1);
 	Eigen::Vector3f faceNormal = intersectTriangle.normal;
-	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights);
+
+	const int numberOfLights = lights.size();
+	bool visibleLights[5];
+	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights, visibleLights);
 
 	if (!lightStrikesHitPoint) {
 		return SHADOW;
@@ -393,7 +396,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
 	int imodel = material.getIlluminationModel();
 
-	float fresnelIndex;
+	float fresnelIndex = 1;
 
 	if (imodel > 2 && imodel <= 7) {
 		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
@@ -424,7 +427,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	}
 
 	if (Color == Eigen::Vector3f(-1, -1, -1)) {
-		Color = phongShade(origin, hitPoint, intersectTriangle, lights);
+		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights);
 	}
 
 
@@ -480,7 +483,7 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 }
 
 //Computes phong shading at the given point with interpolated normals.
-Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights) {
+Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[]) {
 
 	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
@@ -490,6 +493,8 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
 
 	for (int i = 0; i < lights.size(); i++) {
+		if (!visibleLights[i])
+			continue;
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
 		
 		float costheta = max(0.0f, lightDirection.dot(normal));
@@ -553,7 +558,7 @@ float Flyscene::fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior)
 	// kt = 1 - kr;
 }
 
-bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights) {
+bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]) {
 	bool hit = false;
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
@@ -562,6 +567,7 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 	Tucano::Face currTriangle;
 
 	for (int l = 0; l < lights.size(); l++) {
+		t = std::numeric_limits<float>::max();
 		origin = lights[l];
 		direction = hitPoint - origin;
 		//Loop through all of the faces
@@ -574,40 +580,13 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 			}
 		}
 
-		if (t >= 0.99)
+		if (t >= 0.99) {
 			hit = true;
+			visibleLights[l] = true;
+		}
+		else {
+			visibleLights[l] = false;
+		}
 	}
 	return hit;
 }
-
-/*
-//calculate the numbe rof iterations we make to generate an image
-	total_num_of_rays = (float)(image_size[1] * image_size[0]);
-	startTime = clock();
-	//start a progress bar thread
-	std::thread progressBarThread(progressLoop);
-
-	//Divide up pixel regions for the draw method and create threads that will write to pixel_data
-	int seventh = (int)(image_size[1] / 7);
-
-	std::thread draw1Thread = createDrawThread(0, seventh, image_size[0], origin);
-	std::thread draw2Thread = createDrawThread(seventh, 2 * seventh, image_size[0], origin);
-	std::thread draw3Thread = createDrawThread(2 * seventh, 3 * seventh, image_size[0], origin);
-	std::thread draw4Thread = createDrawThread(3 * seventh, 4 * seventh, image_size[0], origin);
-	std::thread draw5Thread = createDrawThread(4 * seventh, 5 * seventh, image_size[0], origin);
-	std::thread draw6Thread = createDrawThread(5 * seventh, 6 * seventh, image_size[0], origin);
-	std::thread draw7Thread = createDrawThread(6 * seventh, image_size[1], image_size[0], origin);
-
-	//Join all of the threads and determine when you are done
-	draw1Thread.join();
-	draw2Thread.join();
-	draw3Thread.join();
-	draw4Thread.join();
-	draw5Thread.join();
-	draw6Thread.join();
-	draw7Thread.join();
-
-
-	done_ray_tracing = true;
-
-	progressBarThread.join();*/
