@@ -29,12 +29,12 @@ public:
 
 	void split(Tucano::Mesh& meshRef);
 
-	std::vector<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
+	std::set<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 
 	//fill in faces
 	bool clasifyFace(int faceIndex, Tucano::Mesh& mesh);
 
-	std::pair<Eigen::Vector3f, Eigen::Vector3f> findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c);
+	std::pair<float, float> findMinMax(float a, float b, float c);
 
 	bool planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eigen::Vector3f maxbox);
 
@@ -50,7 +50,7 @@ public:
 	bool axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
 
-	bool axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
+	bool axisTestX02(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
 
 	bool axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,

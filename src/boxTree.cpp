@@ -21,6 +21,12 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	if (faces.size() > capacity) {
 		this->split(mesh);
 	}
+	else if (faces.empty()) {
+		isEmpty = true;
+	}
+	else {
+		isLeaf = true;
+	}
 }
 
 void BoxTree::split(Tucano::Mesh& meshRef) {
@@ -39,12 +45,12 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 
 	// compute the 8 child nodes
 	BoundingBox b000 = BoundingBox::BoundingBox(box.getMin(), box.getMin() + vx + vy + vz);
-	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin() + vz, box.getMin() + vx + vy + 2*vz);
-	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin() + vy, box.getMin() + vx +2*vy + vz);
-	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin() + vy + vz, box.getMax() -vx );
-	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin() + vx, box.getMin() + 2*vx + vy + vz);
+	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin() + vz, box.getMin() + vx + vy + 2 * vz);
+	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin() + vy, box.getMin() + vx + 2 * vy + vz);
+	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin() + vy + vz, box.getMin() + vx + 2 * vy + 2 * vz);
+	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin() + vx, box.getMin() + 2 * vx + vy + vz);
 	BoundingBox b101 = BoundingBox::BoundingBox(box.getMin() + vx + vz, box.getMax() - vy);
-	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin() + vz + vy, box.getMax() - vz);
+	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin() + vx + vy, box.getMax() - vz);
 	BoundingBox b111 = BoundingBox::BoundingBox(box.getMin() + vx + vy + vz, box.getMax());
 
 	// add the children to the parent node
@@ -56,20 +62,21 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 	children.push_back(BoxTree::BoxTree(b101, capacity));
 	children.push_back(BoxTree::BoxTree(b110, capacity));
 	children.push_back(BoxTree::BoxTree(b111, capacity));
-	
+
 	// distribute the faces of the parent node over the children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
-		for (int i : faces) {
+		for (int i : this->faces) {
 			if (children.at(boxIndex).clasifyFace(i, meshRef)) {
 				children.at(boxIndex).faces.push_back(i);
 			}
 		}
 	}
-
+	/*std::cout << "Parent faces number: "<< this->faces.size()<< std::endl;
+	std::cout << "Used faces: " << used.size() << std::endl;*/
 	// now finally empy the list of faces of the parent node (since this is an inner node)
 	//faces.clear();
 
-	// and repeat the same process for all children
+	//// and repeat the same process for all children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
 		if (children.at(boxIndex).faces.empty() && children.at(boxIndex).children.empty()) {
 			children.at(boxIndex).isEmpty = true;
@@ -84,25 +91,26 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 }
 
 // returns the indices of faces that need to be checked by the raytracer
-std::vector<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
-	std::vector<int> list;
+std::set<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
+	std::set<int> list;
 
 	std::queue<BoxTree> toVisit;
 	toVisit.push(*this);
 	while (!toVisit.empty()) {
 		BoxTree currentBoxTree = toVisit.front();
 		toVisit.pop();
-		if (currentBoxTree.isLeaf && currentBoxTree.box.boxIntersect(origin, dest) && !currentBoxTree.isEmpty) {
-			list.insert(list.end(), currentBoxTree.faces.begin(), currentBoxTree.faces.end());
-		}
-		else {
-			for (BoxTree tree : currentBoxTree.children) {
-				if (!tree.isEmpty && tree.box.boxIntersect(origin, dest)) {
-					toVisit.push(tree);
+		if (currentBoxTree.box.boxIntersect(origin, dest)) {
+			if (currentBoxTree.isLeaf && !currentBoxTree.isEmpty) {
+				list.insert(faces.begin(), faces.end());
+			}
+			else if (!currentBoxTree.isEmpty){
+				for (BoxTree tree : currentBoxTree.children) {
+					if (!tree.isEmpty && tree.box.boxIntersect(origin, dest)) {
+						toVisit.push(tree);
+					}
 				}
 			}
 		}
-		
 	}
 	/*if (box.boxIntersect(origin, dest)) {
 
@@ -140,9 +148,9 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 	int countVertexesInBox = 0;
 	for (Eigen::Vector3f vertex : vertices) {
 
-		if (box.getMin().x() <= vertex.x() && box.getMax().x() >= vertex.x()
-			&& box.getMin().y() <= vertex.y() && box.getMax().y() >= vertex.y()
-			&& box.getMin().z() <= vertex.z() && box.getMax().z() >= vertex.z()
+		if (this->box.getMin().x() <= vertex.x() && this->box.getMax().x() >= vertex.x()
+			&& this->box.getMin().y() <= vertex.y() && this->box.getMax().y() >= vertex.y()
+			&& this->box.getMin().z() <= vertex.z() && this->box.getMax().z() >= vertex.z()
 			) {
 			countVertexesInBox++;
 		}
@@ -152,27 +160,27 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		return true;
 	}
 	else {
-		/*    use separating axis theorem to test overlap between triangle and box */
-		/*    need to test for overlap in these directions: */
+	//	/*    use separating axis theorem to test overlap between triangle and box */
+	//	/*    need to test for overlap in these directions: */
 
-		/*    2) normal of the triangle */
+	//	/*    2) normal of the triangle */
 
-		Eigen::Vector3f boxCenter =
-			Eigen::Vector3f(box.getMin().x() + (box.getMin().x() + box.getMax().x()) / 2,
-				box.getMin().y() + (box.getMin().y() + box.getMax().y()) / 2,
-				box.getMin().z() + (box.getMin().z() + box.getMax().z()) / 2);
-
-
-		Eigen::Vector3f boxhalfsize = Eigen::Vector3f(box.getMax().x(), box.getMax().x(), box.getMax().z());
-
-		Eigen::Vector3f A_origin = vertices[0] - boxCenter;
-		Eigen::Vector3f B_origin = vertices[1] - boxCenter;
-		Eigen::Vector3f C_origin = vertices[2] - boxCenter;
+		Eigen::Vector3f boxcenter =
+			Eigen::Vector3f(this->box.getMin().x() + (this->box.getMax().x() - this->box.getMin().x()) / 2,
+				this->box.getMin().y() + (this->box.getMax().y() - this->box.getMin().y()) / 2,
+				this->box.getMin().z() + (this->box.getMax().z() - this->box.getMin().z()) / 2);
 
 
-		Eigen::Vector3f e_0 = B_origin - A_origin;
-		Eigen::Vector3f e_1 = C_origin - B_origin;
-		Eigen::Vector3f e_2 = A_origin - C_origin;
+		Eigen::Vector3f boxhalfsize = (this->box.getMax() - boxcenter).normalized();
+
+		Eigen::Vector3f a_origin = (vertices[0] - boxcenter).normalized();
+		Eigen::Vector3f b_origin = (vertices[1] - boxcenter).normalized();
+		Eigen::Vector3f c_origin = (vertices[2] - boxcenter).normalized();
+
+
+		Eigen::Vector3f e_0 = b_origin - a_origin;
+		Eigen::Vector3f e_1 = c_origin - b_origin;
+		Eigen::Vector3f e_2 = a_origin - c_origin;
 
 		/*    3) crossproduct(edge from tri, {x,y,z}-directin) */
 		/*       this gives 3x3=9 more tests */
@@ -185,13 +193,13 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_0.y());
 		fez = fabsf(e_0.z());
 
-		if (!axisTestX01(e_0.z(), e_0.y(), fez, fey, A_origin, C_origin, boxhalfsize)) {
+		if (!axisTestX02(e_0.z(), e_0.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestY02(e_0.z(), e_0.x(), fez, fex, A_origin, C_origin, boxhalfsize)) {
+		if (!axisTestY02(e_0.z(), e_0.x(), fez, fex, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestZ12(e_0.y(), e_0.x(), fey, fex, B_origin, C_origin, boxhalfsize)) {
+		if (!axisTestZ12(e_0.y(), e_0.x(), fey, fex, b_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
 
@@ -199,13 +207,13 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_1.y());
 		fez = fabsf(e_1.z());
 
-		if (!axisTestX01(e_1.z(), e_1.y(), fez, fey, A_origin, C_origin, boxhalfsize)) {
+		if (!axisTestX02(e_1.z(), e_1.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestY02(e_1.z(), e_1.x(), fez, fex, A_origin, C_origin, boxhalfsize)) {
+		if (!axisTestY02(e_1.z(), e_1.x(), fez, fex, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestZ0(e_1.y(), e_1.x(), fey, fex, A_origin, B_origin, boxhalfsize)) {
+		if (!axisTestZ0(e_1.y(), e_1.x(), fey, fex, a_origin, b_origin, boxhalfsize)) {
 			return false;
 		}
 
@@ -213,51 +221,62 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_2.y());
 		fez = fabsf(e_2.z());
 
-		if (!axisTestX2(e_2.z(), e_2.y(), fez, fey, A_origin, B_origin, boxhalfsize)) {
+		if (!axisTestX01(e_2.z(), e_2.y(), fez, fey, a_origin, b_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestY1(e_2.z(), e_2.x(), fez, fex, A_origin, B_origin, boxhalfsize)) {
+		if (!axisTestY1(e_2.z(), e_2.x(), fez, fex, a_origin, b_origin, boxhalfsize)) {
 			return false;
 		}
-		if (!axisTestZ12(e_2.y(), e_2.x(), fey, fex, B_origin, C_origin, boxhalfsize)) {
+		if (!axisTestZ12(e_2.y(), e_2.x(), fey, fex, b_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
+		
 
-		pair<Eigen::Vector3f, Eigen::Vector3f> minMaxPair = findMinMax(A_origin, B_origin, C_origin);
-		Eigen::Vector3f min = minMaxPair.first;
-		Eigen::Vector3f max = minMaxPair.second;
-
-		/*    1) the {x,y,z}-directions (actually, since we use the AABB of the triangle */
+		/*    1) the {x,y,z}-directions (actually, since we use the aabb of the triangle */
 		/*       we do not even need to test these) */
+		
 
-		/* test in X-direction */
-		if (min.x() > boxhalfsize.x() || max.x() < -boxhalfsize.x()) {
+		/* test in x-direction */
+		pair<float, float> minmaxpair = findMinMax(a_origin.x(), b_origin.x(), c_origin.x());
+		float min = minmaxpair.first;
+		float max = minmaxpair.second;
+
+		if (min > boxhalfsize.x() || max < -boxhalfsize.x()) {
 			return false;
 		}
-		/* test in Y-direction */
-		if (min.y() > boxhalfsize.y() || max.y() < -boxhalfsize.y()) {
+		/* test in y-direction */
+		minmaxpair = findMinMax(a_origin.y(), b_origin.y(), c_origin.y());
+		min = minmaxpair.first;
+		max = minmaxpair.second;
+		if (min > boxhalfsize.y() || max < -boxhalfsize.y()) {
 			return false;
 		}
-		/* test in Z-direction */
-		if (min.z() > boxhalfsize.z() || max.z() < -boxhalfsize.z()) {
+		/* test in z-direction */
+		minmaxpair = findMinMax(a_origin.z(), b_origin.z(), c_origin.z());
+		min = minmaxpair.first;
+		max = minmaxpair.second;
+		if (min > boxhalfsize.z() || max < -boxhalfsize.z()) {
 			return false;
 		}
-		Eigen::Vector3f normal = e_0.cross(e_1);
-		if (!planeBoxOverlap(normal, A_origin, boxhalfsize)) {
+
+		//get edges of triangle
+		Eigen::Vector3f edge1trianglea = a_origin - b_origin;
+		Eigen::Vector3f edge2trianglea = a_origin - c_origin;
+		//get the normal
+		Eigen::Vector3f normaltrianglea = (edge1trianglea.cross(edge2trianglea)).normalized();
+		//Eigen::Vector3f normal = e_0.cross(e_1);
+
+		if (!planeBoxOverlap(normaltrianglea, a_origin, boxhalfsize)) {
 			return false;
 		}
 		return true;
 	}
 }
 
-std::pair<Eigen::Vector3f, Eigen::Vector3f> BoxTree::findMinMax(Eigen::Vector3f a, Eigen::Vector3f b, Eigen::Vector3f c)
+std::pair<float, float> BoxTree::findMinMax(float a, float b, float c)
 {
-	Eigen::Vector3f min = Eigen::Vector3f(std::min(a.x(), std::min(b.x(), c.x())),
-		std::min(a.y(), std::min(b.y(), c.y())),
-		std::min(a.z(), std::min(b.z(), c.z())));
-	Eigen::Vector3f max = Eigen::Vector3f(std::max(a.x(), std::max(b.x(), c.x())),
-		std::max(a.y(), std::max(b.y(), c.y())),
-		std::max(a.z(), std::max(b.z(), c.z())));
+	float min = std::min(std::min(a, b), c);
+	float max = std::max(std::max(a, b), c);
 	return std::make_pair(min, max);
 }
 
@@ -283,14 +302,14 @@ bool BoxTree::planeBoxOverlap(Eigen::Vector3f normal, Eigen::Vector3f vert, Eige
 
 	return false;
 }
-
-bool BoxTree::axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0, const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize)
+/*checked*/
+bool BoxTree::axisTestX01(float a, float b, float fa, float fb, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& boxhalfsize)
 {
 	float p0 = a * v0.y() - b * v0.z();
-	float p2 = a * v2.y() - b * v2.z();
+	float p1 = a * v1.y() - b * v1.z();
 
-	float max = std::max(p2, p0);
-	float min = std::min(p2, p0);;
+	float max = std::max(p1, p0);
+	float min = std::min(p1, p0);;
 
 	float rad = fa * boxhalfsize.y() + fb * boxhalfsize.z();
 	if (min > rad || max < -rad) {
@@ -298,7 +317,7 @@ bool BoxTree::axisTestX01(float a, float b, float fa, float fb, const Eigen::Vec
 	}
 	return true;
 }
-
+/*checked*/
 bool BoxTree::axisTestY02(float a, float b, float fa, float fb, const Eigen::Vector3f& v0, const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize)
 {
 	float p0 = -a * v0.x() + b * v0.z();
@@ -313,7 +332,7 @@ bool BoxTree::axisTestY02(float a, float b, float fa, float fb, const Eigen::Vec
 	}
 	return true;
 }
-
+/*checked*/
 bool BoxTree::axisTestZ12(float a, float b, float fa, float fb, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, const Eigen::Vector3f& boxhalfsize)
 {
 	float p1 = a * v1.x() - b * v1.y();
@@ -328,7 +347,7 @@ bool BoxTree::axisTestZ12(float a, float b, float fa, float fb, const Eigen::Vec
 	}
 	return true;
 }
-
+/*checked*/
 bool BoxTree::axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& v0, Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize)
 {
 	float p0 = a * v0.x() - b * v0.y();
@@ -343,8 +362,8 @@ bool BoxTree::axisTestZ0(float a, float b, float fa, float fb, Eigen::Vector3f& 
 	}
 	return true;
 }
-
-bool BoxTree::axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& v0, Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize)
+/*checked*/
+bool BoxTree::axisTestX02(float a, float b, float fa, float fb, Eigen::Vector3f& v0, Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize)
 {
 	float p0 = a * v0.y() - b * v0.z();
 	float p1 = a * v1.y() - b * v1.z();
@@ -358,7 +377,7 @@ bool BoxTree::axisTestX2(float a, float b, float fa, float fb, Eigen::Vector3f& 
 	}
 	return true;
 }
-
+/*checked*/
 bool BoxTree::axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0, Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize)
 {
 	float p0 = -a * v0.x() + b * v0.z();
