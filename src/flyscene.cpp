@@ -474,29 +474,55 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 
 }
 
+////Computes phong shading at the given point with interpolated normals.
+//Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights) {
+//
+//	Eigen::Vector3f lightIntensity = calculateShadow(hitPoint, triangle);
+//	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(1.0, 1.0, 1.0);
+//
+//	Tucano::Material::Mtl material = materials[triangle.material_id];
+//	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
+//	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+//	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
+//
+//	for (int i = 0; i < lights.size(); i++) {
+//		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
+//		
+//		float costheta = max(0.0f, lightDirection.dot(normal));
+//		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
+//
+//		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
+//		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint -  origin)).normalized();
+//		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1*reflectedLight));
+//		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
+//
+//		colour += (ambient + diffuse) + specular;
+//	}
+//	return colour;
+//}
+
 //Computes phong shading at the given point with interpolated normals.
 Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights) {
 
-	Eigen::Vector3f lightIntensity = calculateShadow(hitPoint, triangle);
-	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(1.0, 1.0, 1.0);
+	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
 	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
-	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
+	Eigen::Vector3f normal = (mesh.getModelMatrix() * getInterpolatedNormal(hitPoint, triangle)).normalized();
 
 	for (int i = 0; i < lights.size(); i++) {
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
-		
+
 		float costheta = max(0.0f, lightDirection.dot(normal));
 		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
 		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
-		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint -  origin)).normalized();
-		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1*reflectedLight));
+		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - origin)).normalized();
+		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
 		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
-		colour += (ambient + diffuse) + specular;
+		colour += ambient + diffuse + specular;
 	}
 	return colour;
 }
@@ -613,7 +639,7 @@ float calcDistanceV3(Eigen::Vector3f vector) {
 
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
-Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
+float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
 
 	//Tucano::Face triangleTest;
 	//Eigen::Vector3f lightDirection;
@@ -667,12 +693,16 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 
 	//return intensityFactor;
 
-	float totalSamples, totalSum = 0;
+	float totalSamples = 0;
+		float totalSum = 0;
 
 	//for each light create an area light
 	for (Eigen::Vector3f lightSource : lights) {
+		/*float cx = &lightSource.x;
+		float cy = &lightSource.y;
+		float cz = &lightSource.z;*/
 		//left under corner
-		Eigen::Vector3f corner = Eigen::Vector3f(lightSource.x - 2.5, lightSource.y - 2.5, lightSource.z);
+		Eigen::Vector3f corner = lightSource - Eigen::Vector3f(2.5, 2.5, 0);
 		//horizontal
 		Eigen::Vector3f uvec = Eigen::Vector3f(5, 0, 0);
 		float usteps, vsteps = 5;
@@ -684,20 +714,22 @@ Eigen::Vector3f Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano:
 		totalSamples += samples;
 		//Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, float shadowIntensity) {
 
-		arealight alight = arealight(lightSource, corner, uvec, usteps, vvec, vsteps);
+		//arealight alight = arealight(lightSource, corner, uvec, usteps, vvec, vsteps);
 		Eigen::Vector3f middleOfCorner = corner + Eigen::Vector3f(0.5, 0.5, 0);
-		float sum = 0
+		float sum = 0;
+
+		vector<Eigen::Vector3f> moc;
+		moc.push_back(middleOfCorner);
 		
 		for (int v = 0; v < usteps; v = v + 1) {
 			for (int u = 0; u < usteps; u = u + 1) {
-				if (lightStrikes(trianglePoint, middleOfCorner) {
+				if (lightStrikes(trianglePoint, moc)) {
 					sum = sum + 1;
 				}
 				middleOfCorner = middleOfCorner + Eigen::Vector3f(0, 1, 0);
 			}
 			middleOfCorner = middleOfCorner + Eigen::Vector3f(1, 0, 0);
 		}
-
 		totalSum += sum;
 	}
 	return totalSum/totalSamples;
