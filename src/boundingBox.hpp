@@ -36,5 +36,9 @@ public:
 	Eigen::Vector3f getMin();
 
 	Eigen::Vector3f getMax();
+
+	void setMin(Eigen::Vector3f min);
+
+	void setMax(Eigen::Vector3f max);
 };
 

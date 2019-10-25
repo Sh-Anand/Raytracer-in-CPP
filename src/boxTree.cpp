@@ -29,6 +29,61 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	}
 }
 
+void BoxTree::makeBoxSmaller(Tucano::Mesh& meshRef) {
+	Eigen::Vector3f min = this->box.getMin();
+	Eigen::Vector3f max = this->box.getMax();
+	float newMinX = min.x();
+	float newMaxX = max.x();
+	float newMinY = min.y();
+	float newMaxY = max.y();
+	float newMinZ = min.z();
+	float newMaxZ = max.z();
+
+	float newMinXtemp = min.x();
+	float newMaxXtemp = max.x();
+	float newMinYtemp = min.y();
+	float newMaxYtemp = max.y();
+	float newMinZtemp = min.z();
+	float newMaxZtemp = max.z();
+	for (int i = 0; i < this->faces.size(); i++) {
+		Eigen::Vector3f vertices[3] = { (meshRef.getShapeModelMatrix() * meshRef.getVertex(meshRef.getFace(i).vertex_ids[0])).head<3>() ,
+	(meshRef.getShapeModelMatrix() * meshRef.getVertex(meshRef.getFace(i).vertex_ids[1])).head<3>(),
+	(meshRef.getShapeModelMatrix() * meshRef.getVertex(meshRef.getFace(i).vertex_ids[2])).head<3>() };
+		bool triangleFullyInside = true;
+		for (Eigen::Vector3f vertex : vertices) {
+
+			if (this->box.getMin().x() <= vertex.x() && this->box.getMax().x() >= vertex.x()
+				&& this->box.getMin().y() <= vertex.y() && this->box.getMax().y() >= vertex.y()
+				&& this->box.getMin().z() <= vertex.z() && this->box.getMax().z() >= vertex.z()
+				) {
+				newMinXtemp = std::min(newMinX, vertex.x());
+				newMaxXtemp = std::max(newMaxX, vertex.x());
+				newMinYtemp = std::min(newMinY, vertex.y());
+				newMaxYtemp = std::max(newMaxY, vertex.y());
+				newMinZtemp = std::min(newMinZ, vertex.z());
+				newMaxZtemp = std::max(newMaxZ, vertex.z());
+			}
+			else {
+				triangleFullyInside = false;
+				break;
+			}
+		}
+		if (triangleFullyInside) {
+			newMinX = newMinXtemp;
+			newMaxX = newMaxXtemp;
+			newMinY = newMinYtemp;
+			newMaxY = newMaxYtemp;
+			newMinZ = newMinZtemp;
+			newMaxZ = newMaxZtemp;
+		}
+	}
+	Eigen::Vector3f newMin = Eigen::Vector3f(std::min(newMinX, min.x()), std::min(newMinY, min.y()), std::min(newMinZ, min.z()));
+	Eigen::Vector3f newMax = Eigen::Vector3f(std::max(newMaxX, max.x()), std::max(newMaxY, max.y()), std::max(newMaxZ, max.z()));
+	
+	this->box.setMin(newMin);
+	this->box.setMax(newMax);
+}
+
 void BoxTree::split(Tucano::Mesh& meshRef) {
 	// the node is now an inner node
 	isLeaf = false;
@@ -83,6 +138,7 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 		}
 		if (children.at(boxIndex).faces.size() < children.at(boxIndex).capacity) {
 			children.at(boxIndex).isLeaf = true;
+			children.at(boxIndex).makeBoxSmaller(meshRef);
 		}
 		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity) {
 			children.at(boxIndex).split(meshRef);
@@ -101,7 +157,7 @@ std::set<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vec
 		toVisit.pop();
 		if (currentBoxTree.box.boxIntersect(origin, dest)) {
 			if (currentBoxTree.isLeaf && !currentBoxTree.isEmpty) {
-				list.insert(faces.begin(), faces.end());
+				list.insert(currentBoxTree.faces.begin(), currentBoxTree.faces.end());
 			}
 			else if (!currentBoxTree.isEmpty){
 				for (BoxTree tree : currentBoxTree.children) {

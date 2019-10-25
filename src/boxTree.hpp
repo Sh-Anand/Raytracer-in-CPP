@@ -55,4 +55,6 @@ public:
 
 	bool axisTestY1(float a, float b, float fa, float fb, Eigen::Vector3f& v0,
 		Eigen::Vector3f& v1, Eigen::Vector3f& boxhalfsize);
+
+	void makeBoxSmaller(Tucano::Mesh& meshRef);
 };

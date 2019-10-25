@@ -90,3 +90,11 @@ Eigen::Vector3f BoundingBox::getMax() {
 	return vmax;
 }
 
+void BoundingBox::setMin(Eigen::Vector3f min) {
+	vmin = min;
+}
+
+void BoundingBox::setMax(Eigen::Vector3f max) {
+	vmax = max;
+}
+
