@@ -1,8 +1,10 @@
 #include "flyscene.hpp"
 #include "ThreadPool.h"
 #include <GLFW/glfw3.h>
-
-
+#include<iostream>
+#include <thread>
+#include <mutex>
+#include <ctime>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
@@ -28,6 +30,7 @@ void Flyscene::initialize(int width, int height) {
   ray_done_counter = 0;
   ////////////////////////
 
+  
   // set the camera's projection matrix
   flycamera.setPerspectiveMatrix(60.0, width / (float)height, 0.1f, 100.0f);
   flycamera.setViewport(Eigen::Vector2f((float)width, (float)height));
@@ -58,8 +61,18 @@ void Flyscene::initialize(int width, int height) {
   camerarep.shapeMatrix()->scale(0.2);
 
   // the debug ray is a cylinder, set the radius and length of the cylinder
-  ray.setSize(0.005, 10.0);
+  ray.setSize(0.005, 1.f);
 
+  //Set up triangle normal from intersection
+  intersectNormal.setSize(0.005, 10.0);
+
+  //Set up reflected ray
+  reflectedRay.setSize(0.005, 10.0);
+
+
+  
+  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+  
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
 
@@ -117,6 +130,18 @@ void Flyscene::paintGL(void) {
   // render the ray and camera representation for ray debug
   ray.render(flycamera, scene_light);
   camerarep.render(flycamera, scene_light);
+  
+  reflectedRay.render(flycamera, scene_light);
+
+  //render intersection of triangle normal
+  intersectNormal.render(flycamera, scene_light);
+
+  hitCircle.render(flycamera, scene_light);
+
+  for (Tucano::Shapes::Cylinder light : intersectionLightRays) {
+	  light.render(flycamera, scene_light);
+  }
+  
 
   // render ray tracing light sources as yellow spheres
   for (int i = 0; i < lights.size(); ++i) {
@@ -169,7 +194,7 @@ void Flyscene::createBox(Eigen::Vector3f point) {
 
 
 // Creates (technically translates) a sphere at the point provided.
-void Flyscene::createHitPoint(Eigen::Vector3f point) {
+void Flyscene::createHitPoint(Eigen::Vector3f& point) {
 	hitCircle.resetModelMatrix();
 	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
 	modelMatrix.translate(point);
@@ -196,13 +221,12 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	ray.resetModelMatrix();
 
-	//std::cout << "DEBUG: " << flycamera.getViewportSize();
-	//// from pixel position to world coordinates
 	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
 	//// direction from camera center to click position
 	Eigen::Vector3f dir = (screen_pos - flycamera.getCenter()).normalized();
 	//// position and orient the cylinder representing the ray
 	ray.setOriginOrientation(flycamera.getCenter(), dir);
+
 
 	//// place the camera representation (frustum) on current camera location, 
 	camerarep.resetModelMatrix();
@@ -235,13 +259,67 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
 	}
 
-	if (intersected) {
-		Eigen::Vector3f p0 = screen_pos + (t * dir);
-		createHitPoint(p0);
-	}
+  if (intersected) {
+	  Eigen::Vector3f p0 = screen_pos + (t * dir);
+	  createHitPoint(p0);
 
-	else {
-		ray.setSize(0.005, std::numeric_limits<float>::max());
+	  //Eigen::Vector3f distVec = t * dir;
+	  float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
+	
+
+	  intersectNormal.setOriginOrientation(p0, normalTri);
+	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+	  intersectNormal.setSize(0.005, 0.3);
+
+	  reflectedRay.setOriginOrientation(p0, dir - 2 * dir.dot(normalTri) * normalTri);
+	  reflectedRay.setSize(0.005, dist);
+
+	  ray.setSize(0.005, dist);
+
+
+	  for (int i = 0; i < intersectionLightRays.size(); i++) {
+		  Eigen::Vector3f directionLight = (p0 - lights.at(i));
+		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
+		  intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
+		  float distLight = sqrt(directionLight.x() * directionLight.x() 
+			  + directionLight.y() * directionLight.y() 
+			  + directionLight.z() * directionLight.z());
+		  intersectionLightRays.at(i).setSize(0.005, distLight);
+	  }
+  }
+
+  else {
+	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
+	  createHitPoint(p0);
+
+	  intersectNormal.setSize(0.005, 0);
+	  reflectedRay.setSize(0.005, 0);
+
+	  ray.setSize(0.005, std::numeric_limits<float>::max());
+
+
+	  for (int i = 0; i < intersectionLightRays.size(); i++) {
+		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
+		  intersectionLightRays.at(i).setSize(0.005, 0);
+	  }
+  }
+}
+
+void printProgress(float percentage) {
+	progress = (float)ray_done_counter / (float)total_num_of_rays;
+	int val = (int)(percentage * 100);
+	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
+	int rpad = PROGRESS_BAR_WIDTH - lpad;
+	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	fflush(stdout);
+}
+
+void progressLoop() {
+	printProgress(progress);
+	while (!done_ray_tracing) {
+		printProgress(progress);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 
 	boxMin.resetModelMatrix();
@@ -291,6 +369,7 @@ void progressLoop() {
 		printProgress(progress);
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
+
 	printProgress(1.0f);
 }
 
@@ -300,6 +379,7 @@ void progressLoop() {
 
 
 void Flyscene::raytraceScene(int width, int height) {
+
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// create 2d vector to hold pixel colors and resize to match image size
@@ -425,6 +505,7 @@ void Flyscene::raytraceScene(int width, int height) {
 }
 
 
+
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
   
@@ -441,12 +522,12 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		return BACKGROUND;
 	}*/
 
-	Eigen::Vector3f direction = dest - origin;
 
 	int bestIntersectionTriangleIndex = -1;
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
+
 
 	std::set<int> faces = octree.intersect(origin, dest);
 	
@@ -470,16 +551,18 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Eigen::Vector3f hitPoint = origin + t * direction;
 	Eigen::Vector3f color = phongShade(origin, hitPoint, mesh.getFace(bestIntersectionTriangleIndex), lights);
 
+
 	mtx.lock();
 	ray_done_counter++;
 	mtx.unlock();
 
 	return color;
+
 }
 
 
 // Returns parameter t of r = o + td   of the ray that intersects the plane
-float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint) {
+float Flyscene::rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint) {
 	if (rayDirection.dot(planeNormal) == 0) {
 		return	std::numeric_limits<float>::max();
 	}
@@ -487,6 +570,9 @@ float Flyscene::rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f r
 	float t = (planeNormal.dot(planePoint) - rayPoint.dot(planeNormal)) / rayDirection.dot(planeNormal);
 	return t;
 }
+
+
+//Returns a vector with [0] - 1 or 0 meaning: intersection or not. [1] - t: value of light ray to compare distance 
 
 float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle) {
 	Eigen::Vector3f vertices[3] = { (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>() ,
@@ -534,7 +620,6 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 	for (int i = 0; i < lights.size(); i++) {
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
-
 		float costheta = max(0.0f, lightDirection.dot(normal));
 		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
@@ -572,4 +657,5 @@ Eigen::Vector3f Flyscene::getInterpolatedNormal(Eigen::Vector3f& trianglePoint, 
 	float u = 1.0f - v - w;
 
 	return u * normalA + v * normalB + w * normalC;
+
 }
