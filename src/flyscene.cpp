@@ -639,90 +639,57 @@ float calcDistanceV3(Eigen::Vector3f vector) {
 
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
-float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
+float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle, arealight light) {
+	//float totalSamples = 0;
+	//	float totalSum = 0;
 
-	//Tucano::Face triangleTest;
-	//Eigen::Vector3f lightDirection;
-	//float intersection;
-	//Eigen::Vector3f output = Eigen::Vector3f(0.0, 0.0, 0.0);
-	//Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
-	//bool lightHits = true;
+	////for each light create an area light
+	//for (Eigen::Vector3f lightSource : lights) {
+	//	/*float cx = &lightSource.x;
+	//	float cy = &lightSource.y;
+	//	float cz = &lightSource.z;*/
+	//	//left under corner
+	//	Eigen::Vector3f corner = lightSource - Eigen::Vector3f(2.5, 2.5, 0);
+	//	//horizontal
+	//	Eigen::Vector3f uvec = Eigen::Vector3f(5, 0, 0);
+	//	float usteps, vsteps = 5;
+	//	Eigen::Vector3f widthLightCell = uvec / usteps;
+	//	//vertical
+	//	Eigen::Vector3f vvec =  Eigen::Vector3f(0, 5, 0);
+	//	Eigen::Vector3f heightLightCell = vvec / vsteps;
+	//	float samples = usteps * vsteps;
+	//	totalSamples += samples;
+	//	//Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, float shadowIntensity) {
 
-	//float distance = 0.f;
-	//float intensity = 0.f;
+	//	//arealight alight = arealight(lightSource, corner, uvec, usteps, vvec, vsteps);
+	//	Eigen::Vector3f middleOfCorner = corner + Eigen::Vector3f(0.5, 0.5, 0);
+	//	float sum = 0;
 
-	////For loop going through each light
-	//for (Eigen::Vector3f lightPoint : lights) {
-	//	lightDirection = trianglePoint - lightPoint;
-
-	//	distance = calcDistanceV3(lightDirection);
-	//	intensity = 1 / distance;
-	//	lightHits = true;
-
-	//	//For loop going through the meshes to see if the ray to the light is obstructed breaks at the first obscurement.
-	//	for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
-	//		triangleTest = mesh.getFace(j);
-
-	//		Eigen::Vector3f triangleNormal = triangleTest.normal;
-	//		Eigen::Vector3f vertices = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
-	//			
-	//		float t = rayPlaneIntersection(trianglePoint, lightDirection, triangleNormal, vertices);
-	//		float triangleTestDistance = calcDistanceV3(t * lightDirection - lightPoint);
-
-	//		//Checking if the object is even between de lightsource and the point
-	//		if (triangleTestDistance < distance) {
-
-	//			intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
-
-	//			if (intersection != -72) {
-	//				lightHits = false;
-	//				break;
+	//	vector<Eigen::Vector3f> moc;
+	//	moc.push_back(middleOfCorner);
+	//	
+	//	for (int v = 0; v < usteps; v = v + 1) {
+	//		for (int u = 0; u < usteps; u = u + 1) {
+	//			if (lightStrikes(trianglePoint, moc)) {
+	//				sum = sum + 1;
 	//			}
+	//			middleOfCorner = middleOfCorner + Eigen::Vector3f(0, 1, 0);
 	//		}
+	//		middleOfCorner = middleOfCorner + Eigen::Vector3f(1, 0, 0);
 	//	}
-	//	if (lightHits) {
-	//		//cout << "light hit " << endl;
-	//		output = output + Eigen::Vector3f(intensity, intensity, intensity);
-	//	}
-
+	//	totalSum += sum;
 	//}
-	//float x = output[0];
-	//float y = output[1];
-	//float z = output[2];
-	//intensityFactor = Eigen::Vector3f(min(1.f, x), min(1.f, y), min(1.f, z));
-
-	//return intensityFactor;
-
-	float totalSamples = 0;
-		float totalSum = 0;
-
-	//for each light create an area light
-	for (Eigen::Vector3f lightSource : lights) {
-		/*float cx = &lightSource.x;
-		float cy = &lightSource.y;
-		float cz = &lightSource.z;*/
-		//left under corner
-		Eigen::Vector3f corner = lightSource - Eigen::Vector3f(2.5, 2.5, 0);
-		//horizontal
-		Eigen::Vector3f uvec = Eigen::Vector3f(5, 0, 0);
-		float usteps, vsteps = 5;
-		Eigen::Vector3f widthLightCell = uvec / usteps;
-		//vertical
-		Eigen::Vector3f vvec =  Eigen::Vector3f(0, 5, 0);
-		Eigen::Vector3f heightLightCell = vvec / vsteps;
-		float samples = usteps * vsteps;
-		totalSamples += samples;
-		//Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, float shadowIntensity) {
-
-		//arealight alight = arealight(lightSource, corner, uvec, usteps, vvec, vsteps);
-		Eigen::Vector3f middleOfCorner = corner + Eigen::Vector3f(0.5, 0.5, 0);
+	//return totalSum/totalSamples;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	Eigen::Vector3f middleOfCorner = light.getCorner + Eigen::Vector3f(0.5 * light.getUSteps, 0.5 * light.getVSteps, 0);
 		float sum = 0;
+		//float total = 0;
 
 		vector<Eigen::Vector3f> moc;
 		moc.push_back(middleOfCorner);
 		
-		for (int v = 0; v < usteps; v = v + 1) {
-			for (int u = 0; u < usteps; u = u + 1) {
+		for (int v = 0; v < light.getUSteps; v = v + 1) {
+			for (int u = 0; u < light.getVSteps; u = u + 1) {
 				if (lightStrikes(trianglePoint, moc)) {
 					sum = sum + 1;
 				}
@@ -730,8 +697,6 @@ float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face tria
 			}
 			middleOfCorner = middleOfCorner + Eigen::Vector3f(1, 0, 0);
 		}
-		totalSum += sum;
-	}
-	return totalSum/totalSamples;
+	return sum/light.getSamples;
 }
 

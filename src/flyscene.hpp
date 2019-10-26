@@ -76,7 +76,8 @@ public:
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
-  float calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
+  float calculateShadow(arealight light);
+  //float calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
 
   float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
 

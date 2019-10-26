@@ -9,3 +9,31 @@ arealight::arealight(Eigen::Vector3f lightPos, Eigen::Vector3f corner2, Eigen::V
 	samples = usteps2 * vsteps2;
 	pos = lightPos;
 }
+
+//Eigen::Vector3f arealight::getCorner() {
+//	return arealight::corner;
+//}
+//
+//Eigen::Vector3f getUVec() {
+//	return arealight::uvec;
+//}
+//
+//float getUSteps() {
+//	return usteps
+//}
+//
+//Eigen::Vector3f getVVec() {
+//	return vvec;
+//}
+//
+//float getVSteps() {
+//	return vsteps;
+//}
+//
+//float getSamples() {
+//	return samples;
+//}
+//
+//Eigen::Vector3f getPos() {
+//	return pos;
+//}

@@ -16,13 +16,28 @@ class arealight {
 public:
 	arealight(Eigen::Vector3f lightPos, Eigen::Vector3f corner, Eigen::Vector3f uvec, float usteps, Eigen::Vector3f vvec, float vsteps);
 
+	Eigen::Vector3f getCorner() { return corner; };
+
+	Eigen::Vector3f getUVec() { return uvec; };
+
+	float getUSteps() { return usteps; };
+
+	Eigen::Vector3f getVVec() { return vvec; };
+
+	float getVSteps() { return vsteps; };
+
+	float getSamples() { return samples; };
+
+	Eigen::Vector3f getPos() { return pos; };
+
+
 private:
 	Eigen::Vector3f corner;
-
+	//horizontal, x direction, vec(x, 0, 0)
 	Eigen::Vector3f uvec;
 
 	float usteps;
-
+	//vertical, y direction, vec(0, y, 0)
 	Eigen::Vector3f vvec;
 
 	float vsteps;
