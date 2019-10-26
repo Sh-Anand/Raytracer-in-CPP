@@ -681,15 +681,15 @@ float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face tria
 	//}
 	//return totalSum/totalSamples;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	Eigen::Vector3f middleOfCorner = light.getCorner + Eigen::Vector3f(0.5 * light.getUSteps, 0.5 * light.getVSteps, 0);
+	Eigen::Vector3f middleOfCorner = light.getCorner() + Eigen::Vector3f(0.5 * light.getUSteps(), 0.5 * light.getVSteps(), 0);
 		float sum = 0;
 		//float total = 0;
 
 		vector<Eigen::Vector3f> moc;
 		moc.push_back(middleOfCorner);
 		
-		for (int v = 0; v < light.getUSteps; v = v + 1) {
-			for (int u = 0; u < light.getVSteps; u = u + 1) {
+		for (int v = 0; v < light.getUSteps(); v = v + 1) {
+			for (int u = 0; u < light.getVSteps(); u = u + 1) {
 				if (lightStrikes(trianglePoint, moc)) {
 					sum = sum + 1;
 				}
@@ -697,6 +697,6 @@ float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face tria
 			}
 			middleOfCorner = middleOfCorner + Eigen::Vector3f(1, 0, 0);
 		}
-	return sum/light.getSamples;
+	return sum/light.getSamples();
 }
 

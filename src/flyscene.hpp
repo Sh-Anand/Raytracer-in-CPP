@@ -16,6 +16,7 @@
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
 #include <thread>
+#include "../arealight.hpp"
 
 class Flyscene {
 
@@ -76,8 +77,7 @@ public:
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
 
-  float calculateShadow(arealight light);
-  //float calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle);
+  float calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle, arealight light);
 
   float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
 
