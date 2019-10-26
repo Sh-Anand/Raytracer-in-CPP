@@ -6,7 +6,7 @@
 #include <mutex>
 #include <ctime>
 #include "../arealight.hpp"
-#include "../arealight.cpp"
+//#include "../arealight.cpp"
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define SHADOW Eigen::Vector3f(0.f, 0.f, 0.f)
 // Fields for the progress bar
