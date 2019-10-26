@@ -16,7 +16,9 @@
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
-
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 #include "boundingBox.hpp"
 #include "boxTree.hpp"

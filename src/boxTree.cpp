@@ -168,21 +168,6 @@ std::set<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vec
 			}
 		}
 	}
-	/*if (box.boxIntersect(origin, dest)) {
-
-		if (isLeaf) {
-			return faces;
-		}
-
-		else {
-			for (BoxTree child : children) {
-				if (child.isEmpty) {
-					std::vector<int> intersected = child.intersect(origin, dest);
-					list.insert(list.end(), intersected.begin(), intersected.end());
-				}
-			}
-		}
-	}*/
 
 	return list;
 }

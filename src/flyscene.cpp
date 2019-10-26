@@ -1,10 +1,31 @@
 #include "flyscene.hpp"
 #include <GLFW/glfw3.h>
+
+
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
+#define PROGRESS_BAR_STR "=================================================="
+#define PROGRESS_BAR_WIDTH 50
+
+// Fields for the progress bar
+float progress;
+float total_num_of_rays;
+unsigned int ray_done_counter;
+bool done_ray_tracing;
+std::mutex mtx;           // mutex for critical section
+
+typedef vector<pair<Eigen::Vector3f, Eigen::Vector2f>> ThreadPartition;
+
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
+
+
+  //////////////////////////
+  done_ray_tracing = false;
+  progress = 0.0f;
+  ray_done_counter = 0;
+  ////////////////////////
 
   // set the camera's projection matrix
   flycamera.setPerspectiveMatrix(60.0, width / (float)height, 0.1f, 100.0f);
@@ -44,8 +65,18 @@ void Flyscene::initialize(int width, int height) {
   glEnable(GL_DEPTH_TEST);
 
   // uncomment when boxTree class is fully implemented:
+
+
   int capacity = max((int)(mesh.getNumberOfFaces() * 0.05), 100); //max(5, mesh.getNumberOfFaces()/100);
-   octree = BoxTree::BoxTree(getMesh(), capacity);
+  std::cout << "Seting up acceleration data structure ..." << std::endl;
+  auto start = std::chrono::high_resolution_clock::now();
+  
+  octree = BoxTree::BoxTree(getMesh(), capacity);
+
+  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+  std::cout << "Seting up acceleration data structure: Done" << std::endl;
+  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
+
 
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
   //   Tucano::Face face = mesh.getFace(i);    
@@ -179,7 +210,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 
 	// check whether the debug ray hits the (root) bounding box
-	bool hitBox = objectBox.boxIntersect(flycamera.getCenter(), screen_pos);
+	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
 
 	bool intersected = false;
 	float t = std::numeric_limits<float>::max();
@@ -240,38 +271,135 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	Z_axies.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f));*/
 }
 
+
+
+
+
+void printProgress(float percentage) {
+	progress = (float)ray_done_counter / (float)total_num_of_rays;
+	int val = (int)(percentage * 100);
+	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
+	int rpad = PROGRESS_BAR_WIDTH - lpad;
+	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	fflush(stdout);
+}
+
+void progressLoop() {
+	printProgress(progress);
+	while (!done_ray_tracing) {
+		printProgress(progress);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+	printProgress(1.0f);
+}
+
+
+
+
+
+
 void Flyscene::raytraceScene(int width, int height) {
-  std::cout << "ray tracing ..." << std::endl;
+	auto start = std::chrono::high_resolution_clock::now();
 
-  // if no width or height passed, use dimensions of current viewport
-  Eigen::Vector2i image_size(width, height);
-  if (width == 0 || height == 0) {
-    image_size = flycamera.getViewportSize();
-  }
+	// create 2d vector to hold pixel colors and resize to match image size
+	vector<vector<Eigen::Vector3f>> pixel_data;
+	pixel_data.resize(raytracing_image_size[1]);
+	for (int i = 0; i < raytracing_image_size[1]; ++i)
+		pixel_data[i].resize(raytracing_image_size[0]);
 
-  // create 2d vector to hold pixel colors and resize to match image size
-  vector<vector<Eigen::Vector3f>> pixel_data;
-  pixel_data.resize(image_size[1]);
-  for (int i = 0; i < image_size[1]; ++i)
-    pixel_data[i].resize(image_size[0]);
+	// if no width or height passed, use dimensions of current viewport
+	Eigen::Vector2i raytracing_image_size(width, height);
+	if (width == 0 || height == 0) {
+		raytracing_image_size = flycamera.getViewportSize();
+	}
 
-  // origin of the ray is always the camera center
-  Eigen::Vector3f origin = flycamera.getCenter();
-  Eigen::Vector3f screen_coords;
+	//////////////////////////
+	//Set up for progress bar
+	done_ray_tracing = false;
+	progress = 0.f;
+	ray_done_counter = 0;
+	////////////////////////
 
-  // for every pixel shoot a ray from the origin through the pixel coords
-  for (int j = 0; j < image_size[1]; ++j) {
-    for (int i = 0; i < image_size[0]; ++i) {
-      // create a ray from the camera passing through the pixel (i,j)
-      screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
-      // launch raytracing for the given ray and write result to pixel data
-      pixel_data[i][j] = traceRay(origin, screen_coords);
-    }
-  }
+	// create 2d vector to hold pixel colors and resize to match image size
+	//vector<vector<Eigen::Vector3f>> pixel_data;
+	pixel_data.resize(raytracing_image_size[1]);
+	for (int i = 0; i < raytracing_image_size[1]; ++i)
+		pixel_data[i].resize(raytracing_image_size[0]);
+
+	vector<vector<Eigen::Vector3f>>& pixel_data_copy = pixel_data;
+
+	// origin of the ray is always the camera center
+	Eigen::Vector3f origin = flycamera.getCenter();
+	Eigen::Vector3f& origina = origin;
+	Eigen::Vector3f screen_coords;
+
+	total_num_of_rays = (float)(raytracing_image_size[1] * raytracing_image_size[0]);
+
+
+	int num_threads = std::thread::hardware_concurrency() - 1;
+	int total_pixels = raytracing_image_size[0] * raytracing_image_size[1];
+	int partition_size = ceil(total_pixels / num_threads);
+	int counter = 0;
+	std::cout << "Preparing threads ..."<< endl;
+
+
+	vector<ThreadPartition> partitions;
+	ThreadPartition partition;
+
+
+
+	for (int i = 0; i < raytracing_image_size[0]; i++) {
+		for (int j = 0; j < raytracing_image_size[1]; j++) {
+			screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
+			partition.push_back(std::make_pair(screen_coords, Eigen::Vector2f(i, j)));
+			counter++;
+
+			if (counter == partition_size) {
+				counter = 0;
+				partitions.push_back(partition);
+				partition.clear();
+			}
+		}
+	}
+
+	std::cout << "ray tracing ..." << std::endl;
+	//start a progress bar thread
+	std::thread progressBarThread(progressLoop);
+
+
+	vector<std::thread> threads;
+	for (int id = 0; id < partitions.size(); id++) {
+		vector<pair<Eigen::Vector3f, Eigen::Vector2f>>& current_partition = partitions[id];
+		auto f = [&origina, &current_partition, this, &pixel_data_copy]() {
+			vector<pair<Eigen::Vector3f, Eigen::Vector2f>> thread_partition = current_partition;
+			pair<Eigen::Vector3f, Eigen::Vector2f> partition_element;
+			for (int k = 0; k < thread_partition.size(); k++) {
+				partition_element = thread_partition[k];
+				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] = traceRay(origina, partition_element.first);
+			}
+		};
+		threads.push_back(std::thread(f));
+	}
+
+	for (int i = 0; i < partitions.size(); i++) {
+		threads[i].join();
+	}
+
+
+	done_ray_tracing = true;
+
+	progressBarThread.join();
+
+	pixel_data = pixel_data_copy;
+
 
   // write the ray tracing result to a PPM image
   Tucano::ImageImporter::writePPMImage("result.ppm", pixel_data);
+  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+
   std::cout << "ray tracing done! " << std::endl;
+
+  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
 }
 
 
@@ -283,6 +411,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 
 	//No hit? Then return background. No need to check individual triangles!
 	if (!hitBox) {
+		mtx.lock();
+		ray_done_counter++;
+		mtx.unlock();
 		return BACKGROUND;
 	}
 
@@ -306,6 +437,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		}
 	}
 	if (bestIntersectionTriangleIndex == -1) {
+		mtx.lock();
+		ray_done_counter++;
+		mtx.unlock();
 		return BACKGROUND;
 	}
 
@@ -325,7 +459,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 
 	Tucano::Material::Mtl mat = materials[mesh.getFace(bestIntersectionTriangleIndex).material_id];
 
-
+	mtx.lock();
+	ray_done_counter++;
+	mtx.unlock();
 	return mat.getAmbient() + mat.getDiffuse();
 }
 
