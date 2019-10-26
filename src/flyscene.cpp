@@ -34,7 +34,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/dodgeColorTest.obj");
+                                    "resources/models/cube.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -68,14 +68,15 @@ void Flyscene::initialize(int width, int height) {
   // uncomment when boxTree class is fully implemented:
 
 
-  int capacity = max((int)(mesh.getNumberOfFaces() * 0.05), 100); //max(5, mesh.getNumberOfFaces()/100);
+  int capacity = ceil(mesh.getNumberOfFaces() * 0.05);
+  capacity = std::max(capacity, 100);
   std::cout << "Seting up acceleration data structure ..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
   
   octree = BoxTree::BoxTree(getMesh(), capacity);
 
   std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-  std::cout << "Seting up acceleration data structure: Done" << std::endl;
+  std::cout << "Seting up acceleration data structure: done!" << std::endl;
   std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
 
 
@@ -341,7 +342,7 @@ void Flyscene::raytraceScene(int width, int height) {
 	int partition_size = ceil(ceil(total_pixels / num_threads) / 1000);
 
 	
-	int counter = 0;
+	int partition_counter = 0;
 	std::cout << "Preparing threads ..."<< endl;
 	std::cout << "Threads utalized:      " << num_threads << endl;
 	std::cout << "Thread Partition size: " << partition_size << endl;
@@ -349,25 +350,31 @@ void Flyscene::raytraceScene(int width, int height) {
 	vector<ThreadPartition> partitions;
 	ThreadPartition partition;
 
-	//
+	float percentage = 0.25f;
 	unsigned int counter_ray = 0;
 	for (int i = 0; i < raytracing_image_size[0]; i++) {
 		for (int j = 0; j < raytracing_image_size[1]; j++) {
 			screen_coords = flycamera.screenToWorld(Eigen::Vector2f(i, j));
 			bool hitBox = octree.box.boxIntersect(origina, screen_coords);
+			//No hit? Then return background. No need to check individual triangles!
 			if (!hitBox) {
 				pixel_data_copy[i][j] = BACKGROUND;
 				counter_ray++;
 			}
 			else {
 				partition.push_back(std::make_pair(screen_coords, Eigen::Vector2f(i, j)));
-				counter++;
+				partition_counter++;
 			}
-			
-			if (counter == partition_size || (i == raytracing_image_size[0] -1 && j == raytracing_image_size[1] - 1)) {
-				counter = 0;
+			//If we hit the partition size, we add to thread partitions vector
+			if (partition_counter == partition_size || (i == raytracing_image_size[0] -1 && j == raytracing_image_size[1] - 1)) {
+				partition_counter = 0;
 				partitions.push_back(partition);
 				partition.clear();
+				//if a chunk of rays are not hitting the box, decrease partition size
+				if (counter_ray / (raytracing_image_size[0] * raytracing_image_size[1]) > percentage) {
+					percentage += percentage;
+					partition_size = ceil(partition_size/2);
+				}
 			}
 		}
 	}
@@ -424,13 +431,15 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	//Check whether the ray hits the (root) bounding box
 	bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
 
-	//No hit? Then return background. No need to check individual triangles!
+	
+	/*
+	Commented because every thread partition will now contain rays that hit the box
 	if (!hitBox) {
 		mtx.lock();
 		ray_done_counter++;
 		mtx.unlock();
 		return BACKGROUND;
-	}
+	}*/
 
 	Eigen::Vector3f direction = dest - origin;
 

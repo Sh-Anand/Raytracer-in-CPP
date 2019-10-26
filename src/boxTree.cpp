@@ -1,5 +1,6 @@
 ﻿#include "boxTree.hpp"
 
+#define MAX_DEPTH 20
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
@@ -19,7 +20,7 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	}
 
 	if (faces.size() > capacity) {
-		this->split(mesh);
+		this->split(mesh, MAX_DEPTH);
 	}
 	else if (faces.empty()) {
 		isEmpty = true;
@@ -84,7 +85,7 @@ void BoxTree::makeBoxSmaller(Tucano::Mesh& meshRef) {
 	this->box.setMax(newMax);
 }
 
-void BoxTree::split(Tucano::Mesh& meshRef) {
+void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 	// the node is now an inner node
 	isLeaf = false;
 
@@ -136,12 +137,12 @@ void BoxTree::split(Tucano::Mesh& meshRef) {
 		if (children.at(boxIndex).faces.empty() && children.at(boxIndex).children.empty()) {
 			children.at(boxIndex).isEmpty = true;
 		}
-		if (children.at(boxIndex).faces.size() < children.at(boxIndex).capacity) {
+		if (children.at(boxIndex).faces.size() < children.at(boxIndex).capacity || depth <=0) {
 			children.at(boxIndex).isLeaf = true;
 			children.at(boxIndex).makeBoxSmaller(meshRef);
 		}
-		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity) {
-			children.at(boxIndex).split(meshRef);
+		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity && depth > 0) {
+			children.at(boxIndex).split(meshRef, depth - 1);
 		}
 	}
 }
@@ -234,7 +235,7 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_0.y());
 		fez = fabsf(e_0.z());
 
-		if (!axisTestX02(e_0.z(), e_0.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
+		if (!axisTestX01(e_0.z(), e_0.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
 		if (!axisTestY02(e_0.z(), e_0.x(), fez, fex, a_origin, c_origin, boxhalfsize)) {
@@ -248,7 +249,7 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_1.y());
 		fez = fabsf(e_1.z());
 
-		if (!axisTestX02(e_1.z(), e_1.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
+		if (!axisTestX01(e_1.z(), e_1.y(), fez, fey, a_origin, c_origin, boxhalfsize)) {
 			return false;
 		}
 		if (!axisTestY02(e_1.z(), e_1.x(), fez, fex, a_origin, c_origin, boxhalfsize)) {
@@ -262,7 +263,7 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 		fey = fabsf(e_2.y());
 		fez = fabsf(e_2.z());
 
-		if (!axisTestX01(e_2.z(), e_2.y(), fez, fey, a_origin, b_origin, boxhalfsize)) {
+		if (!axisTestX02(e_2.z(), e_2.y(), fez, fey, a_origin, b_origin, boxhalfsize)) {
 			return false;
 		}
 		if (!axisTestY1(e_2.z(), e_2.x(), fez, fex, a_origin, b_origin, boxhalfsize)) {

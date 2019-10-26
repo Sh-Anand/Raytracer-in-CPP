@@ -27,7 +27,7 @@ public:
 
 	BoxTree(Tucano::Mesh& mesh, int capacity);
 
-	void split(Tucano::Mesh& meshRef);
+	void split(Tucano::Mesh& meshRef, int depth);
 
 	std::set<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 
