@@ -19,6 +19,8 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include "../arealight.hpp"
+#include "../arealight.cpp"
 
 #include "boundingBox.hpp"
 #include "boxTree.hpp"
@@ -55,9 +57,10 @@ public:
    * @brief Add a new light source
    */
   void addLight(void) {
-	  lights.push_back(flycamera.getCenter());
-	  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
-	  intersectionLightRays.at(intersectionLightRays.size() - 1).setSize(0.005, 1);
+	  if (areaLight)
+		  lights = createAreaLight(flycamera.getCenter(), 0.3, 0.15, 5, 5).getPointLights();
+	  else
+		  lights.push_back(flycamera.getCenter());
   }
 
   /**
@@ -78,19 +81,14 @@ public:
   std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
 	  return std::thread([=] { draw(start, end, width, origin); });
   }
-  /**
-  * @brief returns paramater t of the ray at point of intersection with the plane, returns floatmax if no intersection.
-  */
-  float rayPlaneIntersection(Eigen::Vector3f rayPoint, Eigen::Vector3f rayDirection, Eigen::Vector3f planeNormal, Eigen::Vector3f planePoint);
  
-
   /**
    * @brief trace a single ray from the camera passing through dest
    * @param origin Ray origin
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight);
 
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
@@ -106,7 +104,14 @@ public:
   Tucano::Mesh& getMesh();
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
-  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
+
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight);
+
+  float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
+
+  bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
+
+  arealight createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps);
 
 private:
   // A simple phong shader for rendering meshes
@@ -168,6 +173,8 @@ private:
   Tucano::Shapes::Cylinder X_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
   Tucano::Shapes::Cylinder Y_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
   Tucano::Shapes::Cylinder Z_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+
+  bool areaLight;
 
 };
 

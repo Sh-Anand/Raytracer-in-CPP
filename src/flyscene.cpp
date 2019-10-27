@@ -5,9 +5,12 @@
 #include <thread>
 #include <mutex>
 #include <ctime>
+#include "../arealight.hpp"
+#include "../arealight.cpp"
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
+
 
 // Fields for the progress bar
 float progress;
@@ -20,6 +23,9 @@ typedef vector<pair<Eigen::Vector3f, Eigen::Vector2f>> ThreadPartition;
 
 
 void Flyscene::initialize(int width, int height) {
+
+	cout << "Enter 0 if Point Lights or 1 if Area Lights : " << endl;
+	cin >> areaLight;
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
 
@@ -405,7 +411,7 @@ void Flyscene::raytraceScene(int width, int height) {
 	
 	int partition_counter = 0;
 	std::cout << "Preparing threads ..."<< endl;
-	std::cout << "Threads utalized:      " << num_threads << endl;
+	std::cout << "Threads utilized:      " << num_threads << endl;
 	std::cout << "Thread Partition size: " << partition_size << endl;
 
 	vector<ThreadPartition> partitions;
@@ -456,8 +462,9 @@ void Flyscene::raytraceScene(int width, int height) {
 			ThreadPartition thread_partition = current_partition;
 			for (int k = 0; k < thread_partition.size(); k++) {
 				pair<Eigen::Vector3f, Eigen::Vector2f> partition_element = thread_partition[k];
+				Eigen::Vector3f direction = partition_element.first - origina;
 				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] =
-					traceRay(origina, partition_element.first);
+					traceRay(origina, direction, 0, lights, areaLight);
 			}
 		};
 		results.emplace_back(pool.enqueue(f));
@@ -486,9 +493,8 @@ void Flyscene::raytraceScene(int width, int height) {
 }
 
 
-
-Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &dest) {
+Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
+	Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight) {
   
 	//Check whether the ray hits the (root) bounding box
 	/*bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
@@ -508,16 +514,15 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
-	Eigen::Vector3f direction = dest - origin;
 
-	std::set<int> faces = octree.intersect(origin, dest);
+	std::set<int> faces = octree.intersect(origin, direction+origin);
 	
 	//Loop through the reduced list of faces
 	for (int i : faces) {
 		//get a direction vector
 		Tucano::Face currTriangle = mesh.getFace(i);
 		intersection = rayTriangleIntersection(origin, direction, currTriangle);
-		if (intersection != -72 && intersection < t) {
+		if (intersection != -72 && intersection < t && intersection > 0.00001) {
 			t = intersection;
 			bestIntersectionTriangleIndex = i;
 		}
@@ -529,15 +534,66 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		return BACKGROUND;
 	}
 	
+	Tucano::Face intersectTriangle = mesh.getFace(bestIntersectionTriangleIndex);
+
 	Eigen::Vector3f hitPoint = origin + t * direction;
-	Eigen::Vector3f color = phongShade(origin, hitPoint, mesh.getFace(bestIntersectionTriangleIndex), lights);
+	Eigen::Vector3f Color = Eigen::Vector3f(-1, -1, -1);
+	Eigen::Vector3f faceNormal = intersectTriangle.normal;
+
+	bool visibleLights[25];
+	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights, visibleLights);
+
+	//Return Shadow
+	if (!lightStrikesHitPoint) {
+		mtx.lock();
+		ray_done_counter++;
+		mtx.unlock();
+		return Eigen::Vector3f(0, 0, 0);
+	}
+
+	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
+	int imodel = material.getIlluminationModel();
+
+	float fresnelIndex = 1;
+
+	if (imodel == 9) {
+		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight);
+	}
+	if (imodel > 2 && imodel < 7) {
+		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
+		vector<Eigen::Vector3f> reflectedLights;
+		reflectedLights.push_back(hitPoint);
+
+		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight);
+		if (imodel == 5) {
+			float opticalDensity = material.getOpticalDensity();
+			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
+			return fresnelIndex * Color;
+		}
+	}
+
+	if (imodel == 6 || imodel == 7) {
+		float c1 = abs(direction.dot(faceNormal));
+		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
+		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
+		if (imodel == 7) {
+			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
+		}
+		else {
+			Color = traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
+		}
+	}
+
+	if (Color == Eigen::Vector3f(-1, -1, -1)) {
+		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight);
+	}
 
 
 	mtx.lock();
 	ray_done_counter++;
 	mtx.unlock();
 
-	return color;
+	return Color;
 
 }
 
@@ -590,17 +646,27 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 }
 
 //Computes phong shading at the given point with interpolated normals.
-Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights) {
+Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight) {
 
-	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
+	Eigen::Vector3f lightIntensity = lightrep.getColor().head<3>();
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
-	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
+	//Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
 	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
 	Eigen::Vector3f normal = (mesh.getModelMatrix() * getInterpolatedNormal(hitPoint, triangle)).normalized();
 
+	float sum = 0;
+
 	for (int i = 0; i < lights.size(); i++) {
+
+		if (!areaLight && !visibleLights[i]) {
+			continue;
+		}
+		else if (visibleLights[i]) {
+			sum++;
+		}
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
+
 		float costheta = max(0.0f, lightDirection.dot(normal));
 		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
 
@@ -609,8 +675,10 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
 		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
-		colour += ambient + diffuse + specular;
+		colour += diffuse + specular;
 	}
+	if (areaLight)
+		return colour * (sum / lights.size()) * (1.3f / lights.size());
 	return colour;
 }
 
@@ -639,4 +707,66 @@ Eigen::Vector3f Flyscene::getInterpolatedNormal(Eigen::Vector3f& trianglePoint, 
 
 	return u * normalA + v * normalB + w * normalC;
 
+}
+
+float Flyscene::fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior)
+{
+	float cosi = I.dot(N);
+	float etai = 1, etat = ior;
+	if (cosi > 0) { std::swap(etai, etat); }
+	// Compute sini using Snell's law
+	float sint = etai / etat * sqrtf(std::max(0.f, 1 - cosi * cosi));
+	// Total internal reflection
+	if (sint >= 1) {
+		return 1;
+	}
+	else {
+		float cost = sqrtf(std::max(0.f, 1 - sint * sint));
+		cosi = fabsf(cosi);
+		float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+		float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+		return (Rs * Rs + Rp * Rp) / 2;
+	}
+	// As a consequence of the conservation of energy, transmittance is given by:
+	// kt = 1 - kr;
+}
+
+bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]) {
+	bool hit = false;
+	float intersection, t;
+	Eigen::Vector3f origin, direction;
+	Tucano::Face currTriangle;
+
+	for (int l = 0; l < lights.size(); l++) {
+		t = std::numeric_limits<float>::max();
+		origin = lights[l];
+		direction = hitPoint - origin;
+		//Loop through all of the faces
+		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+			//get a direction vector
+			currTriangle = mesh.getFace(i);
+			if (materials[currTriangle.material_id].getIlluminationModel() == 9) {
+				continue;
+			}
+			intersection = rayTriangleIntersection(origin, direction, currTriangle);
+			if (intersection != -72 && intersection < t && intersection > 0.00001) {
+				t = intersection;
+			}
+		}
+
+		if (t >= 0.98) {
+			hit = true;
+			visibleLights[l] = true;
+		}
+		else {
+			visibleLights[l] = false;
+		}
+	}
+	return hit;
+}
+
+arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps) {
+	Eigen::Vector3f uvec = corner + lengthX * (Eigen::Vector3f(1, 0, 0));
+	Eigen::Vector3f vvec = corner + lengthY * (Eigen::Vector3f(0, 1, 0));
+	return arealight(corner, uvec, usteps, vvec, vsteps);
 }
