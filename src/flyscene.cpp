@@ -240,7 +240,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	bool intersected = false;
 	float t = std::numeric_limits<float>::max();
-
+	int intersectedTriangleIndex = -1;
 	if(hitBox) {
 		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
 		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
@@ -250,6 +250,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 				intersected = true;
 				if (intersection < t) {
 					t = intersection;
+					intersectedTriangleIndex = i;
 				}
 				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
 			}
@@ -288,7 +289,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		  intersectionLightRays.at(i).setSize(0.005, distLight);
 	  }
   }
-
   else {
 	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
 	  createHitPoint(p0);
@@ -304,53 +304,34 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		  intersectionLightRays.at(i).setSize(0.005, 0);
 	  }
   }
+
+  boxMin.resetModelMatrix();
+  Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
+  boxMinModelMatrix.translate(objectBox.getMin());
+  boxMin.setModelMatrix(boxMinModelMatrix);
+  boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+
+  boxMax.resetModelMatrix();
+  Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
+  boxMaxModelMatrix.translate(objectBox.getMax());
+  boxMax.setModelMatrix(boxMaxModelMatrix);
+  boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+
+
+  //Show X, Y and Z axies
+
+  /*X_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(1.f, 0.f, 0.f));
+  Y_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 1.f, 0.f));
+  Z_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 1.f));
+
+  X_axies.setSize(0.005, 5);
+  Y_axies.setSize(0.005, 5);
+  Z_axies.setSize(0.005, 5);
+
+  X_axies.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+  Y_axies.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+  Z_axies.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f));*/
 }
-
-void printProgress(float percentage) {
-	progress = (float)ray_done_counter / (float)total_num_of_rays;
-	int val = (int)(percentage * 100);
-	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
-	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
-	fflush(stdout);
-}
-
-void progressLoop() {
-	printProgress(progress);
-	while (!done_ray_tracing) {
-		printProgress(progress);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-
-	boxMin.resetModelMatrix();
-	Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
-	boxMinModelMatrix.translate(objectBox.getMin());
-	boxMin.setModelMatrix(boxMinModelMatrix);
-	boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
-
-	boxMax.resetModelMatrix();
-	Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
-	boxMaxModelMatrix.translate(objectBox.getMax());
-	boxMax.setModelMatrix(boxMaxModelMatrix);
-	boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
-
-
-	//Show X, Y and Z axies
-
-	/*X_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(1.f, 0.f, 0.f));
-	Y_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 1.f, 0.f));
-	Z_axies.setOriginOrientation(Eigen::Vector3f(0.f, 0.f, 0.f), Eigen::Vector3f(0.f, 0.f, 1.f));
-
-	X_axies.setSize(0.005, 5);
-	Y_axies.setSize(0.005, 5);
-	Z_axies.setSize(0.005, 5);
-
-	X_axies.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
-	Y_axies.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
-	Z_axies.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f));*/
-}
-
-
 
 
 
@@ -527,7 +508,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
-
+	Eigen::Vector3f direction = dest - origin;
 
 	std::set<int> faces = octree.intersect(origin, dest);
 	
