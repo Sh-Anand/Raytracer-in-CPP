@@ -183,7 +183,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 
 	if (intersected) {
-		bool visiblelights[20];
+		bool visiblelights[25];
 		Eigen::Vector3f hitPoint = screen_pos + (t * dir);
 		std::cout << "SIZE : " << lights.size() << endl;
 		std::cout <<"LIGHT STRIKES WYHAT THE FUCK : "<< lightStrikes(hitPoint, lights, visiblelights)<<endl;
@@ -403,7 +403,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Eigen::Vector3f faceNormal = intersectTriangle.normal;
 
 	const int numberOfLights = lights.size();
-	bool visibleLights[15];
+	bool visibleLights[25];
 	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights, visibleLights);
 
 
@@ -521,7 +521,7 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 		colour += diffuse + specular;
 	}
-	return colour * (sum/lights.size()) * (1.2f/lights.size());
+	return colour * (sum/lights.size()) * (1.0f/lights.size());
 }
 
 //Computes the interpolated normal for the given point on the triangle.
