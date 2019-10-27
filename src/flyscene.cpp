@@ -429,11 +429,11 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
                                    Eigen::Vector3f &dest) {
   
 	//Check whether the ray hits the (root) bounding box
-	bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
+	/*bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
 
-	
-	/*
 	Commented because every thread partition will now contain rays that hit the box
+
+
 	if (!hitBox) {
 		mtx.lock();
 		ray_done_counter++;
