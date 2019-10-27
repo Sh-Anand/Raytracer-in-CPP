@@ -500,16 +500,15 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
-	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
+	//Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
 	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
 	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
 
 	float sum = 0;
 
 	for (int i = 0; i < lights.size(); i++) {
-		sum++;
-		if (!visibleLights[i])
-			sum--;
+		if (visibleLights[i])
+			sum++;
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
 		
 		float costheta = max(0.0f, lightDirection.dot(normal));
@@ -522,7 +521,7 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 		colour += diffuse + specular;
 	}
-	return colour * (sum/lights.size());
+	return colour * (sum/lights.size()) * (1.2f/lights.size());
 }
 
 //Computes the interpolated normal for the given point on the triangle.
