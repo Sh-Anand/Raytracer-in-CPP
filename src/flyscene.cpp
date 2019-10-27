@@ -670,7 +670,7 @@ Eigen::Vector3f Flyscene::calculateShadowPoint(Eigen::Vector3f trianglePoint, Tu
 
 				intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
 
-				if (intersection != -72) {
+				if (intersection != -72 && intersection < t && intersection > 0.00001) {
 					lightHits = false;
 					break;
 				}
