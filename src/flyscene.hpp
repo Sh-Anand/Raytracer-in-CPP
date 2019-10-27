@@ -50,8 +50,11 @@ public:
   /**
    * @brief Add a new light source
    */
-  void addLight(void) { lights = createAreaLight(flycamera.getCenter(),0.3,0.15,5,5).getPointLights(); 
-	  //lights.push_back(flycamera.getCenter());
+  void addLight(void) { 
+	  if(areaLight)
+		lights = createAreaLight(flycamera.getCenter(),0.3,0.15,5,5).getPointLights(); 
+	  else
+		lights.push_back(flycamera.getCenter());
   }
 
   /**
@@ -72,7 +75,7 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level, vector<Eigen::Vector3f>& lights);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& dest, int level, vector<Eigen::Vector3f>& lights, bool areaLight);
 
   Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
 
@@ -82,7 +85,7 @@ public:
 
   void createHitPoint(Eigen::Vector3f& point);
 
-  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight);
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
 
@@ -129,6 +132,8 @@ private:
   vector<Tucano::Material::Mtl> materials;
 
   vector<vector<Eigen::Vector3f>> pixel_data;
+
+  bool areaLight;
 };
 
 #endif // FLYSCENE

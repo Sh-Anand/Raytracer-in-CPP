@@ -22,6 +22,8 @@ clock_t endTime;
 
 void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
+	cout << "Enter 0 if Point Lights or 1 if Area Lights : "<<endl;
+	cin >> areaLight;
   phong.initialize();
 
 
@@ -192,12 +194,12 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 			std::cout << visiblelights[i];
 		}
 		std::cout << endl;
-		if (materials[riangle.material_id].getIlluminationModel() == 9) {
+		/*if (materials[riangle.material_id].getIlluminationModel() == 9) {
 			float c1 = abs(dir.dot(riangle.normal));
 			float c2 = sqrt(1 - (pow((1 / materials[riangle.material_id].getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
 			Eigen::Vector3f refractedRay = (1 / materials[riangle.material_id].getOpticalDensity()) * dir + ((1 / materials[riangle.material_id].getOpticalDensity()) * c1 - c2) * riangle.normal;
 			reflectedRay.setOriginOrientation(hitPoint, refractedRay);
-		}
+		}*/
 		
 		createHitPoint(hitPoint);
 		Tucano::Face testTriangle;
@@ -340,7 +342,7 @@ void Flyscene::raytraceScene(int width, int height) {
 			for (int k = 0; k < thread_partition.size(); k++) {
 				partition_element = thread_partition[k];
 				Eigen::Vector3f direction = partition_element.first - origina;
-				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] = traceRay(origina, direction , 0, lights);
+				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] = traceRay(origina, direction , 0, lights, areaLight);
 			}
 		};
 		threads.push_back(std::thread(f));
@@ -368,7 +370,7 @@ void Flyscene::raytraceScene(int width, int height) {
 
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
-                                   Eigen::Vector3f &direction, int level, vector<Eigen::Vector3f>& lights) {
+                                   Eigen::Vector3f &direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight) {
   // just some fake random color per pixel until you implement your ray tracing
   // remember to return your RGB values as floats in the range [0, 1]!!!
 	
@@ -406,6 +408,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	bool visibleLights[25];
 	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights, visibleLights);
 
+	if (!lightStrikesHitPoint)
+		return SHADOW;
+
 
 
 	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
@@ -418,7 +423,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		vector<Eigen::Vector3f> reflectedLights;
 		reflectedLights.push_back(hitPoint);
 
-		Color = traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights);
+		Color = traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight);
 		if (imodel == 5) {
 			float opticalDensity = material.getOpticalDensity();
 			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
@@ -431,15 +436,15 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
 		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
 		if (imodel == 7) {
-			Color = fresnelIndex * Color + (1-fresnelIndex)* traceRay(hitPoint, refractedRay, level + 1, lights);
+			Color = fresnelIndex * Color + (1-fresnelIndex)* traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
 		}
 		else {
-			Color = traceRay(hitPoint, refractedRay, level + 1, lights);
+			Color = traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
 		}
 	}
 
 	if (Color == Eigen::Vector3f(-1, -1, -1)) {
-		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights);
+		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight);
 	}
 
 
@@ -495,7 +500,7 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 }
 
 //Computes phong shading at the given point with interpolated normals.
-Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[]) {
+Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight) {
 
 	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
@@ -507,8 +512,13 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	float sum = 0;
 
 	for (int i = 0; i < lights.size(); i++) {
-		if (visibleLights[i])
+
+		if (!areaLight && !visibleLights[i]) {
+			continue;
+		}
+		else if (visibleLights[i]) {
 			sum++;
+		}
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
 		
 		float costheta = max(0.0f, lightDirection.dot(normal));
@@ -521,7 +531,9 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 
 		colour += diffuse + specular;
 	}
-	return colour * (sum/lights.size()) * (1.0f/lights.size());
+	if(areaLight)
+		return colour * (sum/lights.size()) * (1.1f/lights.size());
+	return colour;
 }
 
 //Computes the interpolated normal for the given point on the triangle.
