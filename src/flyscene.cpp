@@ -378,12 +378,6 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Eigen::Vector3f hitPoint = origin + (t * direction);
 	Eigen::Vector3f Color = Eigen::Vector3f(-1,-1,-1);
 	Eigen::Vector3f faceNormal = intersectTriangle.normal;
-	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights);
-
-	if (!lightStrikesHitPoint) {
-		return SHADOW;
-	}
-
 
 	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
 	int imodel = material.getIlluminationModel();
@@ -504,7 +498,8 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 //Computes phong shading at the given point with interpolated normals.
 Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights) {
 
-	Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
+	Eigen::Vector3f lightIntensity = calculateShadowPoint(hitPoint, triangle);
+	//Eigen::Vector3f lightIntensity = Eigen::Vector3f(1, 1, 1);
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
@@ -639,7 +634,62 @@ float calcDistanceV3(Eigen::Vector3f vector) {
 
 //Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
 //if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
-float Flyscene::calculateShadow(Eigen::Vector3f trianglePoint, Tucano::Face triangle, arealight light) {
+Eigen::Vector3f Flyscene::calculateShadowPoint(Eigen::Vector3f trianglePoint, Tucano::Face triangle) {
+
+	Tucano::Face triangleTest;
+	Eigen::Vector3f lightDirection;
+	float intersection;
+	Eigen::Vector3f output = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f intensityFactor = Eigen::Vector3f(0.0, 0.0, 0.0);
+	bool lightHits = true;
+
+	float distance = 0.f;
+	float intensity = 0.f;
+	float amountLights = lights.size();
+	float amountHits = 0;
+
+	//For loop going through each light
+	for (Eigen::Vector3f lightPoint : lights) {
+		lightDirection = trianglePoint - lightPoint;
+
+		distance = calcDistanceV3(lightDirection);
+		lightHits = true;
+
+		//For loop going through the meshes to see if the ray to the light is obstructed breaks at the first obscurement.
+		for (int j = 0; j < mesh.getNumberOfFaces(); j++) {
+			triangleTest = mesh.getFace(j);
+
+			Eigen::Vector3f triangleNormal = triangleTest.normal;
+			Eigen::Vector3f vertices = (mesh.getShapeModelMatrix() * mesh.getVertex(triangle.vertex_ids[0])).head<3>();
+
+			float t = rayPlaneIntersection(trianglePoint, lightDirection, triangleNormal, vertices);
+			float triangleTestDistance = calcDistanceV3(t * lightDirection - lightPoint);
+
+			//Checking if the object is even between de lightsource and the point
+			if (triangleTestDistance < distance) {
+
+				intersection = rayTriangleIntersection(lightPoint, lightDirection, triangleTest);
+
+				if (intersection != -72) {
+					lightHits = false;
+					break;
+				}
+			}
+		}
+		if (lightHits) {
+			amountHits = amountHits + 1;
+		}
+
+	}
+	intensity = amountHits / amountLights;
+	intensityFactor = Eigen::Vector3f(intensity, intensity, intensity);
+
+	return intensityFactor;
+}
+
+//Given a triangle and a point that the ray intersects with on the triangle, this method tests whether a light ray passes through that point without intersecting any other triangle on the way.
+//if yes, return false and do not paint a hard shadow, else return true and paint a hardshadow.
+float Flyscene::calculateShadowArea(Eigen::Vector3f trianglePoint, Tucano::Face triangle, arealight light) {
 	//float totalSamples = 0;
 	//	float totalSum = 0;
 
