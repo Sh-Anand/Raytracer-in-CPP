@@ -34,8 +34,11 @@
 #VS Specific
 .vs
 
-#Folders
+#folders
 x64/
-out
 
+#pdf
+*.pdf
 
+#images
+*.ppm
