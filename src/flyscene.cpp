@@ -4,6 +4,8 @@
 #include <thread>
 #include <mutex>
 #include <ctime>
+#include "../arealight.hpp"
+#include "../arealight.cpp"
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define SHADOW Eigen::Vector3f(0.f, 0.f, 0.f)
 #define PROGRESS_BAR_STR "=================================================="
@@ -179,10 +181,17 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		}
 	}
 
-	
 
 	if (intersected) {
+		bool visiblelights[20];
 		Eigen::Vector3f hitPoint = screen_pos + (t * dir);
+		std::cout << "SIZE : " << lights.size() << endl;
+		std::cout <<"LIGHT STRIKES WYHAT THE FUCK : "<< lightStrikes(hitPoint, lights, visiblelights)<<endl;
+		std::cout << "VISIBLE LIGHTS : ";
+		for (int i = 0; i < lights.size(); i++) {
+			std::cout << visiblelights[i];
+		}
+		std::cout << endl;
 		if (materials[riangle.material_id].getIlluminationModel() == 9) {
 			float c1 = abs(dir.dot(riangle.normal));
 			float c2 = sqrt(1 - (pow((1 / materials[riangle.material_id].getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
@@ -394,12 +403,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f &origin,
 	Eigen::Vector3f faceNormal = intersectTriangle.normal;
 
 	const int numberOfLights = lights.size();
-	bool visibleLights[5];
+	bool visibleLights[15];
 	bool lightStrikesHitPoint = lightStrikes(hitPoint, lights, visibleLights);
 
-	//if (!lightStrikesHitPoint) {
-		//return SHADOW;
-	//}
 
 
 	Tucano::Material::Mtl material = materials[intersectTriangle.material_id];
@@ -498,9 +504,12 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
 	Eigen::Vector3f normal = (mesh.getModelMatrix()*getInterpolatedNormal(hitPoint,triangle)).normalized();
 
+	float sum = 0;
+
 	for (int i = 0; i < lights.size(); i++) {
+		sum++;
 		if (!visibleLights[i])
-			continue;
+			sum--;
 		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
 		
 		float costheta = max(0.0f, lightDirection.dot(normal));
@@ -511,9 +520,9 @@ Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& h
 		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1*reflectedLight));
 		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
 
-		colour += ambient + diffuse + specular;
+		colour += diffuse + specular;
 	}
-	return colour;
+	return colour * (sum/lights.size());
 }
 
 //Computes the interpolated normal for the given point on the triangle.
@@ -566,9 +575,7 @@ float Flyscene::fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior)
 
 bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]) {
 	bool hit = false;
-	float intersection;
-	//Store the best intersection (triangle closest to the camera)
-	float t = std::numeric_limits<float>::max();
+	float intersection, t;
 	Eigen::Vector3f origin, direction;
 	Tucano::Face currTriangle;
 
@@ -589,7 +596,7 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 			}
 		}
 
-		if (t >= 0.99) {
+		if (t >= 0.98) {
 			hit = true;
 			visibleLights[l] = true;
 		}
@@ -598,4 +605,14 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 		}
 	}
 	return hit;
+}
+
+arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps) {
+	Eigen::Vector3f uvec = corner + lengthX * (Eigen::Vector3f(1, 0, 0));
+	Eigen::Vector3f vvec = corner + lengthY * (Eigen::Vector3f(0, 1, 0));
+	return arealight(corner,uvec , usteps, vvec, vsteps);
+}
+
+float Flyscene::calculateIntensity(arealight& areaLight, Eigen::Vector3f& hitPoint) {
+	return 0;
 }

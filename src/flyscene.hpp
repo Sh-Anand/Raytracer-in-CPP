@@ -16,6 +16,8 @@
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
 #include <thread>
+#include "../arealight.hpp"
+#include "../arealight.cpp"
 
 class Flyscene {
 
@@ -48,7 +50,9 @@ public:
   /**
    * @brief Add a new light source
    */
-  void addLight(void) { lights.push_back(flycamera.getCenter()); }
+  void addLight(void) { //lights = createAreaLight(flycamera.getCenter(),0.2,0.1,4,3).getPointLights(); 
+	  lights.push_back(flycamera.getCenter());
+  }
 
   /**
    * @brief Create a debug ray at the current camera location and passing
@@ -85,6 +89,10 @@ public:
   float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
 
   bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
+
+  float calculateIntensity(arealight& areaLight, Eigen::Vector3f& hitPoint);
+
+  arealight createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps);
 
 private:
   // A simple phong shader for rendering meshes
