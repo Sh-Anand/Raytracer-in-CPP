@@ -433,7 +433,7 @@ void Flyscene::raytraceScene(int width, int height) {
 				partition.clear();
 				//if a chunk of rays are not hitting the box, decrease partition size
 				if (counter_ray / (raytracing_image_size[0] * raytracing_image_size[1]) > percentage) {
-					percentage += percentage;
+					percentage += 0.1f;
 					partition_size = ceil(partition_size/4);
 				}
 			}
