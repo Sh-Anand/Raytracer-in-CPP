@@ -13,11 +13,51 @@ BoxTree::BoxTree(Tucano::Mesh& mesh, int capacity) {
 	this->capacity = capacity;
 	isLeaf = false;
 	isEmpty = false;
-
+	std::priority_queue<float> x_queue;
+	std::priority_queue<float> y_queue;
+	std::priority_queue<float> z_queue;
 	// add all indices to list of faces
+	int vertIndex = 0;
+	Eigen::Vector3f vert;
 	for (int i = 0; i < mesh.getNumberOfFaces(); ++i) {
 		faces.push_back(i);
+		if (i < mesh.getNumberOfVertices()) {
+			vertecies.push_back(i);
+			vert = (mesh.getShapeModelMatrix() * mesh.getVertex(i)).head<3>();
+			x_queue.push(vert.x());
+			y_queue.push(vert.y());
+			z_queue.push(vert.z());
+			vertIndex++;
+		}
 	}
+
+	for (int i = vertIndex; i < mesh.getNumberOfVertices(); i++) {
+		vertecies.push_back(i);
+		vert = (mesh.getShapeModelMatrix() * mesh.getVertex(i)).head<3>();
+		x_queue.push(vert.x());
+		y_queue.push(vert.y());
+		z_queue.push(vert.z());
+	}
+
+	int firstQuartile = (int)(x_queue.size() / 4);
+	int middle = 2 * firstQuartile;
+	int secondQuartile = 3 * firstQuartile;
+	for (int i = 0; i < secondQuartile; i++) {
+		if (i == firstQuartile) {
+			firstQuartileAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+		}
+		else if (i == middle) {
+			centerAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+		}
+		x_queue.pop();
+		y_queue.pop();
+		z_queue.pop();
+	}
+	secondQuartileAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+
+	x_queue.~priority_queue();
+	y_queue.~priority_queue();
+	z_queue.~priority_queue();
 
 	if (faces.size() > capacity) {
 		this->split(mesh, MAX_DEPTH);
@@ -89,25 +129,47 @@ void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 	// the node is now an inner node
 	isLeaf = false;
 
-	// get half of the difference between min and max for each dimension
-	float dx = (box.getMax().x() - box.getMin().x()) / 2;
-	float dy = (box.getMax().y() - box.getMin().y()) / 2;
-	float dz = (box.getMax().z() - box.getMin().z()) / 2;
+	//// get half of the difference between min and max for each dimension
+	float dx = (box.getMax().x() - box.getMin().x());
+	float dy = (box.getMax().y() - box.getMin().y());
+	float dz = (box.getMax().z() - box.getMin().z());
+	Eigen::Vector3f top_x = Eigen::Vector3f(dx, 0.f, 0.f);
+	Eigen::Vector3f top_y = Eigen::Vector3f(0.f, dy, 0.f);
+	Eigen::Vector3f top_z = Eigen::Vector3f(0.f, 0.f, dz);
 
 	// pass the difference into a 3D vector
-	Eigen::Vector3f vx = Eigen::Vector3f(dx, 0, 0);
-	Eigen::Vector3f vy = Eigen::Vector3f(0, dy, 0);
-	Eigen::Vector3f vz = Eigen::Vector3f(0, 0, dz);
+	Eigen::Vector3f quater1_x = Eigen::Vector3f(firstQuartileAxies.x(), 0.f, 0.f);
+	Eigen::Vector3f quater1_y = Eigen::Vector3f(0.f, firstQuartileAxies.y(), 0.f);
+	Eigen::Vector3f quater1_z = Eigen::Vector3f(0.f, 0.f, firstQuartileAxies.z());
+
+	Eigen::Vector3f median_x = Eigen::Vector3f(centerAxies.x(), 0.f, 0.f);
+	Eigen::Vector3f median_y = Eigen::Vector3f(0.f, centerAxies.y(), 0.f);
+	Eigen::Vector3f median_z = Eigen::Vector3f(0.f, 0.f, centerAxies.z());
+
+	Eigen::Vector3f quater2_x = Eigen::Vector3f(secondQuartileAxies.x(), 0.f, 0.f);
+	Eigen::Vector3f quater2_y = Eigen::Vector3f(0.f, secondQuartileAxies.y(), 0.f);
+	Eigen::Vector3f quater2_z = Eigen::Vector3f(0.f, 0.f, secondQuartileAxies.z());
+
+
 
 	// compute the 8 child nodes
-	BoundingBox b000 = BoundingBox::BoundingBox(box.getMin(), box.getMin() + vx + vy + vz);
-	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin() + vz, box.getMin() + vx + vy + 2 * vz);
-	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin() + vy, box.getMin() + vx + 2 * vy + vz);
-	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin() + vy + vz, box.getMin() + vx + 2 * vy + 2 * vz);
-	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin() + vx, box.getMin() + 2 * vx + vy + vz);
-	BoundingBox b101 = BoundingBox::BoundingBox(box.getMin() + vx + vz, box.getMax() - vy);
-	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin() + vx + vy, box.getMax() - vz);
-	BoundingBox b111 = BoundingBox::BoundingBox(box.getMin() + vx + vy + vz, box.getMax());
+	BoundingBox b000 = BoundingBox::BoundingBox(box.getMin()					    , quater1_x + top_y + median_z);
+	BoundingBox b001 = BoundingBox::BoundingBox(box.getMin() + median_z				, quater1_x + top_y + top_z);
+
+
+
+	BoundingBox b010 = BoundingBox::BoundingBox(box.getMin() + quater1_x			, median_x + top_y + median_z);
+	BoundingBox b011 = BoundingBox::BoundingBox(box.getMin() + median_z + quater1_x , median_x + top_y + top_z);
+
+
+
+	BoundingBox b100 = BoundingBox::BoundingBox(box.getMin() + median_x				, quater2_x + top_y + median_z);
+	BoundingBox b101 = BoundingBox::BoundingBox(box.getMin() + median_z	+ median_x	, quater2_x + top_y + top_z);
+
+
+
+	BoundingBox b110 = BoundingBox::BoundingBox(box.getMin() + quater2_x			, top_x + top_y + median_z);
+	BoundingBox b111 = BoundingBox::BoundingBox(box.getMin() + median_z + quater2_x , box.getMax());
 
 	// add the children to the parent node
 	children.push_back(BoxTree::BoxTree(b000, capacity));
@@ -119,18 +181,94 @@ void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 	children.push_back(BoxTree::BoxTree(b110, capacity));
 	children.push_back(BoxTree::BoxTree(b111, capacity));
 
+
+
+
 	// distribute the faces of the parent node over the children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
-		for (int i : this->faces) {
+		std::priority_queue<float> x_queue;
+		std::priority_queue<float> y_queue;
+		std::priority_queue<float> z_queue;
+
+		int vertIndex = 0;
+		Eigen::Vector3f vert;
+		for (int i = 0; i < this->faces.size(); ++i) {
+			if (children.at(boxIndex).clasifyFace(this->faces.at(i), meshRef)) {
+				children.at(boxIndex).faces.push_back(this->faces.at(i));
+			}
+			if (i < this->vertecies.size()) {
+				vert = (meshRef.getShapeModelMatrix() * meshRef.getVertex(this->vertecies.at(i))).head<3>();
+
+				if (children.at(boxIndex).box.getMin().x() <= vert.x() && children.at(boxIndex).box.getMax().x() >= vert.x()
+					&& children.at(boxIndex).box.getMin().y() <= vert.y() && children.at(boxIndex).box.getMax().y() >= vert.y()
+					&& children.at(boxIndex).box.getMin().z() <= vert.z() && children.at(boxIndex).box.getMax().z() >= vert.z()
+					) {
+					children.at(boxIndex).vertecies.push_back(this->vertecies.at(i));
+					x_queue.push(vert.x());
+					y_queue.push(vert.y());
+					z_queue.push(vert.z());
+					vertIndex++;
+				}
+			}
+		}
+
+		for (int i = vertIndex; i < this->vertecies.size(); i++) {
+			vert = (meshRef.getShapeModelMatrix() * meshRef.getVertex(this->vertecies.at(i))).head<3>();
+
+			if (children.at(boxIndex).box.getMin().x() <= vert.x() && children.at(boxIndex).box.getMax().x() >= vert.x()
+				&& children.at(boxIndex).box.getMin().y() <= vert.y() && children.at(boxIndex).box.getMax().y() >= vert.y()
+				&& children.at(boxIndex).box.getMin().z() <= vert.z() && children.at(boxIndex).box.getMax().z() >= vert.z()
+				) {
+				children.at(boxIndex).vertecies.push_back(this->vertecies.at(i));
+				x_queue.push(vert.x());
+				y_queue.push(vert.y());
+				z_queue.push(vert.z());
+				vertIndex++;
+			}
+		}
+		/*for (int i : this->faces) {
 			if (children.at(boxIndex).clasifyFace(i, meshRef)) {
 				children.at(boxIndex).faces.push_back(i);
 			}
 		}
+		for (int j : this->vertecies) {
+			Eigen::Vector3f vert = (meshRef.getShapeModelMatrix() * meshRef.getVertex(j)).head<3>();
+			if (this->box.getMin().x() <= vert.x() && this->box.getMax().x() >= vert.x()
+				&& this->box.getMin().y() <= vert.y() && this->box.getMax().y() >= vert.y()
+				&& this->box.getMin().z() <= vert.z() && this->box.getMax().z() >= vert.z()
+				) {
+				children.at(boxIndex).vertecies.push_back(j);
+				x_queue.push(vert.x());
+				y_queue.push(vert.y());
+				z_queue.push(vert.z());
+			}
+		}*/
+
+		int firstQuartile = (int)(x_queue.size() / 4);
+		int middle = 2 * firstQuartile;
+		int secondQuartile = 3 * firstQuartile;
+		for (int i = 0; i < secondQuartile; i++) {
+			if (i == firstQuartile) {
+				children.at(boxIndex).firstQuartileAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+			}
+			else if (i == middle) {
+				children.at(boxIndex).centerAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+			}
+			x_queue.pop();
+			y_queue.pop();
+			z_queue.pop();
+		}
+		children.at(boxIndex).secondQuartileAxies = Eigen::Vector3f(x_queue.top(), y_queue.top(), z_queue.top());
+
+		x_queue.~priority_queue();
+		y_queue.~priority_queue();
+		z_queue.~priority_queue();
 	}
-	/*std::cout << "Parent faces number: "<< this->faces.size()<< std::endl;
-	std::cout << "Used faces: " << used.size() << std::endl;*/
+
+
 	// now finally empy the list of faces of the parent node (since this is an inner node)
-	//faces.clear();
+	faces.clear();
+	vertecies.clear();
 
 	//// and repeat the same process for all children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {

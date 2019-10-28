@@ -497,9 +497,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight) {
   
 	//Check whether the ray hits the (root) bounding box
-	/*bool hitBox = octree.box.boxIntersect(origin, dest);//objectBox.boxIntersect(origin, dest);
-
-	Commented because every thread partition will now contain rays that hit the box
+	bool hitBox = octree.box.boxIntersect(origin, direction- origin);//objectBox.boxIntersect(origin, dest);
 
 
 	if (!hitBox) {
@@ -507,7 +505,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		ray_done_counter++;
 		mtx.unlock();
 		return BACKGROUND;
-	}*/
+	}
 
 
 	int bestIntersectionTriangleIndex = -1;
@@ -515,7 +513,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	//Store the best intersection (triangle closest to the camera)
 	float t = std::numeric_limits<float>::max();
 
-	std::set<int> faces = octree.intersect(origin, direction+origin);
+	std::set<int> faces = octree.intersect(origin, direction-origin);
 	
 	//Loop through the reduced list of faces
 	for (int i : faces) {

@@ -20,6 +20,10 @@ public:
 	bool isEmpty;
 	std::vector<BoxTree> children;
 	std::vector<int> faces;
+	std::vector<int> vertecies;
+	Eigen::Vector3f firstQuartileAxies;
+	Eigen::Vector3f centerAxies;
+	Eigen::Vector3f secondQuartileAxies;
 
 	BoxTree(void) {}
 
