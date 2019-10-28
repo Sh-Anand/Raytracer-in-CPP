@@ -59,8 +59,9 @@ public:
   void addLight(void) {
 	  if (areaLight)
 		  lights = createAreaLight(flycamera.getCenter(), 0.3, 0.15, 5, 5).getPointLights();
-	  else
+	  else {
 		  lights.push_back(flycamera.getCenter());
+	  }
   }
 
   /**
@@ -97,21 +98,21 @@ public:
 
   void createHitPoint(Eigen::Vector3f& point);
 
-  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle);
-
   void createBox(Eigen::Vector3f point);
 
   Tucano::Mesh& getMesh();
 
   Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
 
-  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight);
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
 
   float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
 
   bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
 
   arealight createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps);
+
+  vector<Eigen::Vector3f> createSpherePoint(Eigen::Vector3f lightPoint);
 
 private:
   // A simple phong shader for rendering meshes

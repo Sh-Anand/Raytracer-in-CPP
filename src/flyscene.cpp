@@ -7,6 +7,7 @@
 #include <ctime>
 #include "../arealight.hpp"
 #include "../arealight.cpp"
+#include <random>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
@@ -43,7 +44,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/untitled1.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -439,8 +440,8 @@ void Flyscene::raytraceScene(int width, int height) {
 				partition.clear();
 				//if a chunk of rays are not hitting the box, decrease partition size
 				if (counter_ray / (raytracing_image_size[0] * raytracing_image_size[1]) > percentage) {
-					percentage += 0.1f;
-					partition_size = ceil(partition_size/4);
+					percentage += percentage;
+					partition_size = ceil(partition_size/2);
 				}
 			}
 		}
@@ -557,14 +558,14 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	float fresnelIndex = 1;
 
 	if (imodel == 9) {
-		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight);
+		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight);
 	}
 	if (imodel > 2 && imodel < 7) {
 		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
 		vector<Eigen::Vector3f> reflectedLights;
 		reflectedLights.push_back(hitPoint);
 
-		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight);
+		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight);
 		if (imodel == 5) {
 			float opticalDensity = material.getOpticalDensity();
 			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
@@ -585,7 +586,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	}
 
 	if (Color == Eigen::Vector3f(-1, -1, -1)) {
-		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight);
+		Color = phongShade(origin, hitPoint, intersectTriangle, lights);
 	}
 
 
@@ -646,40 +647,43 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 }
 
 //Computes phong shading at the given point with interpolated normals.
-Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight) {
+Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lightsp) {
 
 	Eigen::Vector3f lightIntensity = lightrep.getColor().head<3>();
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	//Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
-	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0), finalColour = Eigen::Vector3f(0.0,0.0,0.0);
 	Eigen::Vector3f normal = (mesh.getModelMatrix() * getInterpolatedNormal(hitPoint, triangle)).normalized();
+	vector<Eigen::Vector3f> lights;
+	for (int l = 0; l < lightsp.size(); l++) {
+		float sum = 0;
+		colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+		lights = createSpherePoint(lightsp.at(l));
+		bool visibleLights[25];
+		lightStrikes(hitPoint, lights, visibleLights);
+		for (int i = 0; i < lights.size(); i++) {
 
-	float sum = 0;
-
-	for (int i = 0; i < lights.size(); i++) {
-
-		if (!areaLight && !visibleLights[i]) {
-			continue;
-		}
-		else if (visibleLights[i]) {
+			if (!visibleLights[i]) {
+				continue;
+			}
 			sum++;
+
+			Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
+
+			float costheta = max(0.0f, lightDirection.dot(normal));
+			Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
+
+			Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
+			Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - origin)).normalized();
+			float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
+			Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
+
+			colour += diffuse + specular;
 		}
-		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
-
-		float costheta = max(0.0f, lightDirection.dot(normal));
-		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
-
-		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
-		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - origin)).normalized();
-		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
-		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
-
-		colour += diffuse + specular;
+		finalColour += colour*(sum / lights.size()) * (1.3f / lights.size());
 	}
-	if (areaLight)
-		return colour * (sum / lights.size()) * (1.3f / lights.size());
-	return colour;
+	return finalColour;
 }
 
 //Computes the interpolated normal for the given point on the triangle.
@@ -769,4 +773,29 @@ arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float
 	Eigen::Vector3f uvec = corner + lengthX * (Eigen::Vector3f(1, 0, 0));
 	Eigen::Vector3f vvec = corner + lengthY * (Eigen::Vector3f(0, 1, 0));
 	return arealight(corner, uvec, usteps, vvec, vsteps);
+}
+
+vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) {
+	float sphereRadius = lightrep.getBoundingSphereRadius();
+	vector<Eigen::Vector3f> lightPoints;
+	for (int i = 0; i < 25; i++) {
+
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<> dis(0, 1);
+
+		float randomno = dis(gen);
+		float theta = 2.0f * M_PI * randomno;
+		float phi = acos(2.0 * randomno - 1.0);
+
+
+		float x = sphereRadius * sin(phi) * cos(theta);
+		float y = sphereRadius * sin(phi) * sin(theta);
+		float z = sphereRadius * cos(phi);
+		Eigen::Vector3f pointOnSphere = Eigen::Vector3f(x, y, z)/5 + lightPoint;
+		//std::cout << pointOnSphere << endl;
+		lightPoints.push_back(pointOnSphere);
+	}
+
+	return lightPoints;
 }
