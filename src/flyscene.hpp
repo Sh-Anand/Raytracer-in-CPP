@@ -73,11 +73,7 @@ public:
    */
   void raytraceScene(int width = 0, int height = 0);
 
-  void draw(int start, int end, int width, Eigen::Vector3f origin);
 
-  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
-	  return std::thread([=] { draw(start, end, width, origin); });
-  }
  
   /**
    * @brief trace a single ray from the camera passing through dest
@@ -109,6 +105,8 @@ public:
   arealight createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps);
 
   vector<Eigen::Vector3f> createSpherePoint(Eigen::Vector3f lightPoint);
+
+  void modifyTriangle();
 
 private:
   // A simple phong shader for rendering meshes
@@ -172,6 +170,10 @@ private:
   Tucano::Shapes::Cylinder Z_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
 
   bool areaLight;
+
+  bool pointLight;
+  
+  Tucano::Face triangleToModify;
 
   std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> leafBoxes;
   std::vector<Tucano::Shapes::Box> leafBoxesVisual;
