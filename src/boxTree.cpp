@@ -139,10 +139,8 @@ void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 		}
 		if (children.at(boxIndex).faces.size() < children.at(boxIndex).capacity || depth <=0) {
 			children.at(boxIndex).isLeaf = true;
-			children.at(boxIndex).makeBoxSmaller(meshRef);
 		}
 		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity && depth > 0) {
-			children.at(boxIndex).makeBoxSmaller(meshRef);
 			children.at(boxIndex).split(meshRef, depth - 1);
 		}
 	}
@@ -174,7 +172,7 @@ std::set<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vec
 	return list;
 }
 
-std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> BoxTree::boxesIntersected(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
+std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> BoxTree::leafBoxes() {
 	std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> finalList;
 
 	std::queue<BoxTree> toVisit;
@@ -182,16 +180,12 @@ std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> BoxTree::boxesIntersected(co
 	while (!toVisit.empty()) {
 		BoxTree currentBoxTree = toVisit.front();
 		toVisit.pop();
-		if (currentBoxTree.box.boxIntersect(origin, dest)) {
-			if (currentBoxTree.isLeaf && !currentBoxTree.isEmpty) {
-				finalList.push_back(std::make_pair(currentBoxTree.box.getMin(), currentBoxTree.box.getMax()));
-			}
-			else if (!currentBoxTree.isEmpty) {
-				for (BoxTree tree : currentBoxTree.children) {
-					if (!tree.isEmpty && tree.box.boxIntersect(origin, dest)) {
-						toVisit.push(tree);
-					}
-				}
+		if (currentBoxTree.isLeaf && !currentBoxTree.isEmpty) {
+			finalList.push_back(std::make_pair(currentBoxTree.box.getMin(), currentBoxTree.box.getMax()));
+		}
+		else if (!currentBoxTree.isEmpty) {
+			for (BoxTree tree : currentBoxTree.children) {
+				toVisit.push(tree);
 			}
 		}
 	}
