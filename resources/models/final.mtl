@@ -1,0 +1,177 @@
+# Blender MTL File: 'final.blend'
+# Material Count: 17
+
+newmtl Coffee_Table
+Ns 158.040797
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 0.100000 C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\table2.png
+map_Kd C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\table.png
+
+newmtl Floor
+Ns 323.999994
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Material.003
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Material.005
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 0.400000 C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\marble2.png
+
+newmtl Material.008
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Material.010
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Material.011
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl Middle
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 0.400000 C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\Marble12_NRM_1K.png
+map_Kd C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\Marble12_COL_1K.png
+
+newmtl None
+Ns 500
+Ka 0.0 0.0 0.0
+Kd 0.8 0.8 0.8
+Ks 0.8 0.8 0.8
+d 1
+illum 2
+
+newmtl Pear_Flower.001
+Ns 506.250000
+Ka 0.000000 0.000000 0.000000
+Kd 0.081149 0.024718 0.009021
+Ks 0.000000 0.000000 0.000000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 1
+
+newmtl Pear_Skin
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.735644 0.690884 0.050095
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\images\pear.jpg
+
+newmtl Pear_Tail
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.072968 0.032573 0.004899
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl Top
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 0.600000 -s 8.000000 8.000000 8.000000 C:\Users\mirij\Documents\Computer Graphics\CG-Raytracing-Group-65\resources\imagesScratchesLight007_NRM_1K.png
+
+newmtl ceiling
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.677738 0.428480
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.450000
+d 1.000000
+illum 2
+
+newmtl mirror
+Ns 225.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl wall
+Ns 323.999994
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl wall.001
+Ns 323.999994
+Ka 0.000000 0.000000 0.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.0 0.0 0.0
+Ni 1.000000
+d 1.000000
+illum 2
