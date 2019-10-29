@@ -27,6 +27,8 @@ void Flyscene::initialize(int width, int height) {
 
 	cout << "Enter 0 if Point Lights or 1 if Area Lights : " << endl;
 	cin >> areaLight;
+	cout << "Enter 0 if spherical or 1 if point : " << endl;
+	cin >> pointLight;
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
 
@@ -44,7 +46,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/mirror.obj");
+                                    "resources/models/sphereMirror.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -271,16 +273,21 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	  Eigen::Vector3f p0 = screen_pos + (t * dir);
 	  createHitPoint(p0);
 	  std::cout << "MATERIAL NAME: " << materials[mesh.getFace(intersectedTriangleIndex).material_id].getName();
+	  triangleToModify = mesh.getFace(intersectedTriangleIndex);
 	  //Eigen::Vector3f distVec = t * dir;
 	  float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
 	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
-	
+		
+	  Tucano::Material::Mtl material = materials[mesh.getFace(intersectedTriangleIndex).material_id];
+	  float c1 = abs(dir.dot(normalTri));
+	  float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
+	  Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * dir + ((1 / material.getOpticalDensity()) * c1 - c2) * normalTri;
 
 	  intersectNormal.setOriginOrientation(p0, normalTri);
 	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
 	  intersectNormal.setSize(0.005, 0.3);
 
-	  reflectedRay.setOriginOrientation(p0, dir - 2 * dir.dot(normalTri) * normalTri);
+	  reflectedRay.setOriginOrientation(p0, refractedRay);
 	  reflectedRay.setSize(0.005, dist);
 
 	  ray.setSize(0.005, dist);
@@ -510,7 +517,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		return BACKGROUND;
 	}*/
 
-
+	if (level == 3)
+		return BACKGROUND;
+		
 	int bestIntersectionTriangleIndex = -1;
 	float intersection;
 	//Store the best intersection (triangle closest to the camera)
@@ -558,8 +567,9 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	float fresnelIndex = 1;
 
 	if (imodel == 9) {
-		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight);
+		Color =  traceRay(hitPoint, direction, level + 1, lights, areaLight);
 	}
+
 	if (imodel > 2 && imodel < 7) {
 		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
 		vector<Eigen::Vector3f> reflectedLights;
@@ -581,7 +591,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
 		}
 		else {
-			Color = traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
+			Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8* traceRay(hitPoint, refractedRay, level + 1, lights, areaLight);
 		}
 	}
 
@@ -749,7 +759,7 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 			//get a direction vector
 			currTriangle = mesh.getFace(i);
-			if (materials[currTriangle.material_id].getIlluminationModel() == 9) {
+			if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
 				continue;
 			}
 			intersection = rayTriangleIntersection(origin, direction, currTriangle);
@@ -777,9 +787,16 @@ arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float
 
 vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) {
 
+	if (pointLight) {
+		vector<Eigen::Vector3f> lightss;
+		lightss.push_back(lightPoint);
+		return lightss;
+	}
+
 	if (areaLight) {
 		return createAreaLight(lightPoint, 0.3, 0.15, 5, 5).getPointLights();
 	}
+
 	float sphereRadius = lightrep.getBoundingSphereRadius();
 	vector<Eigen::Vector3f> lightPoints;
 	for (int i = 0; i < 25; i++) {
@@ -802,4 +819,20 @@ vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) 
 	}
 
 	return lightPoints;
+}
+
+void Flyscene::modifyTriangle() {
+	cout << endl<< "Enter new kd : " << endl;
+	float x, y, z;
+	cin >> x >> y >> z;
+	Eigen::Vector3f kd = Eigen::Vector3f(x, y, z);
+	cout << "Enter new ks: "<<endl;
+	cin >> x >> y >> z;
+	Eigen::Vector3f ks = Eigen::Vector3f(x, y, z);
+
+	Tucano::Material::Mtl newMaterial = materials[triangleToModify.material_id];
+	newMaterial.setDiffuse(kd);
+	newMaterial.setSpecular(ks);
+	materials.push_back(newMaterial);
+	triangleToModify.material_id = materials.size() - 1;
 }

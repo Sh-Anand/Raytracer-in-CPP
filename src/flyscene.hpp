@@ -110,6 +110,8 @@ public:
 
   vector<Eigen::Vector3f> createSpherePoint(Eigen::Vector3f lightPoint);
 
+  void modifyTriangle();
+
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
@@ -172,6 +174,10 @@ private:
   Tucano::Shapes::Cylinder Z_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
 
   bool areaLight;
+
+  bool pointLight;
+  
+  Tucano::Face triangleToModify;
 
 };
 
