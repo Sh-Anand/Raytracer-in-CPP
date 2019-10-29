@@ -57,11 +57,7 @@ public:
    * @brief Add a new light source
    */
   void addLight(void) {
-	  if (areaLight)
-		  lights = createAreaLight(flycamera.getCenter(), 0.3, 0.15, 5, 5).getPointLights();
-	  else {
-		  lights.push_back(flycamera.getCenter());
-	  }
+	  lights.push_back(flycamera.getCenter());
   }
 
   /**

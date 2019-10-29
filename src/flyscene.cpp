@@ -44,7 +44,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/untitled1.obj");
+                                    "resources/models/mirror.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -270,7 +270,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
   if (intersected) {
 	  Eigen::Vector3f p0 = screen_pos + (t * dir);
 	  createHitPoint(p0);
-
+	  std::cout << "MATERIAL NAME: " << materials[mesh.getFace(intersectedTriangleIndex).material_id].getName();
 	  //Eigen::Vector3f distVec = t * dir;
 	  float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
 	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
@@ -776,6 +776,10 @@ arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float
 }
 
 vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) {
+
+	if (areaLight) {
+		return createAreaLight(lightPoint, 0.3, 0.15, 5, 5).getPointLights();
+	}
 	float sphereRadius = lightrep.getBoundingSphereRadius();
 	vector<Eigen::Vector3f> lightPoints;
 	for (int i = 0; i < 25; i++) {
