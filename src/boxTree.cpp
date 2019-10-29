@@ -1,6 +1,6 @@
 #include "boxTree.hpp"
 
-#define MAX_DEPTH 20
+#define MAX_DEPTH 10
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;
@@ -130,7 +130,7 @@ void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 	/*std::cout << "Parent faces number: "<< this->faces.size()<< std::endl;
 	std::cout << "Used faces: " << used.size() << std::endl;*/
 	// now finally empy the list of faces of the parent node (since this is an inner node)
-	//faces.clear();
+	faces.clear();
 
 	//// and repeat the same process for all children
 	for (int boxIndex = 0; boxIndex < children.size(); boxIndex++) {
@@ -142,6 +142,7 @@ void BoxTree::split(Tucano::Mesh& meshRef, int depth) {
 			children.at(boxIndex).makeBoxSmaller(meshRef);
 		}
 		if (children.at(boxIndex).faces.size() > children.at(boxIndex).capacity && depth > 0) {
+			children.at(boxIndex).makeBoxSmaller(meshRef);
 			children.at(boxIndex).split(meshRef, depth - 1);
 		}
 	}
@@ -171,6 +172,31 @@ std::set<int> BoxTree::intersect(const Eigen::Vector3f& origin, const Eigen::Vec
 	}
 
 	return list;
+}
+
+std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> BoxTree::boxesIntersected(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest) {
+	std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> finalList;
+
+	std::queue<BoxTree> toVisit;
+	toVisit.push(*this);
+	while (!toVisit.empty()) {
+		BoxTree currentBoxTree = toVisit.front();
+		toVisit.pop();
+		if (currentBoxTree.box.boxIntersect(origin, dest)) {
+			if (currentBoxTree.isLeaf && !currentBoxTree.isEmpty) {
+				finalList.push_back(std::make_pair(currentBoxTree.box.getMin(), currentBoxTree.box.getMax()));
+			}
+			else if (!currentBoxTree.isEmpty) {
+				for (BoxTree tree : currentBoxTree.children) {
+					if (!tree.isEmpty && tree.box.boxIntersect(origin, dest)) {
+						toVisit.push(tree);
+					}
+				}
+			}
+		}
+	}
+
+	return finalList;
 }
 
 
@@ -208,9 +234,9 @@ bool BoxTree::clasifyFace(int faceIndex, Tucano::Mesh& mesh)
 	//	/*    2) normal of the triangle */
 
 		Eigen::Vector3f boxcenter =
-			Eigen::Vector3f(this->box.getMin().x() + (this->box.getMax().x() - this->box.getMin().x()) / 2,
-				this->box.getMin().y() + (this->box.getMax().y() - this->box.getMin().y()) / 2,
-				this->box.getMin().z() + (this->box.getMax().z() - this->box.getMin().z()) / 2);
+			Eigen::Vector3f(this->box.getMin().x() + (this->box.getMax().x() - this->box.getMin().x()) / 2.f,
+				this->box.getMin().y() + (this->box.getMax().y() - this->box.getMin().y()) / 2.f,
+				this->box.getMin().z() + (this->box.getMax().z() - this->box.getMin().z()) / 2.f);
 
 
 		Eigen::Vector3f boxhalfsize = (this->box.getMax() - boxcenter).normalized();

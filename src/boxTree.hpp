@@ -31,6 +31,8 @@ public:
 
 	std::set<int> intersect(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
 
+	std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> boxesIntersected(const Eigen::Vector3f& origin, const Eigen::Vector3f& dest);
+
 	//fill in faces
 	bool clasifyFace(int faceIndex, Tucano::Mesh& mesh);
 

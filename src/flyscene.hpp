@@ -73,11 +73,7 @@ public:
    */
   void raytraceScene(int width = 0, int height = 0);
 
-  void draw(int start, int end, int width, Eigen::Vector3f origin);
 
-  std::thread createDrawThread(int start, int end, int width, Eigen::Vector3f origin) {
-	  return std::thread([=] { draw(start, end, width, origin); });
-  }
  
   /**
    * @brief trace a single ray from the camera passing through dest
@@ -85,7 +81,7 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight, bool countRay);
 
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
@@ -163,7 +159,7 @@ private:
   BoxTree octree;
   
   //Visual aid object for a bounding box
-  Tucano::Shapes::Box boundingboxVisual;
+  Tucano::Shapes::Box boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
 
 
   Tucano::Shapes::Sphere boxMin = Tucano::Shapes::Sphere(0.02);
