@@ -164,7 +164,7 @@ private:
   BoxTree octree;
   
   //Visual aid object for a bounding box
-  Tucano::Shapes::Box boundingboxVisual;
+  Tucano::Shapes::Box boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
 
 
   Tucano::Shapes::Sphere boxMin = Tucano::Shapes::Sphere(0.02);

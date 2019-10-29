@@ -11,6 +11,7 @@
 #define SHADOW Eigen::Vector3f(0.f, 0.f, 0.f)
 #define PROGRESS_BAR_STR "=================================================="
 #define PROGRESS_BAR_WIDTH 50
+#define SCALAR 0.0000001f;
 
 
 // Fields for the progress bar
@@ -30,7 +31,6 @@ void Flyscene::initialize(int width, int height) {
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
 
-
   //////////////////////////
   done_ray_tracing = false;
   progress = 0.0f;
@@ -45,7 +45,7 @@ void Flyscene::initialize(int width, int height) {
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
                                     "resources/models/cube.obj");
-
+  //dodgeColorTest
 
   // normalize the model (scale to unit cube and center at origin)
   mesh.normalizeModelMatrix();
@@ -88,8 +88,7 @@ void Flyscene::initialize(int width, int height) {
   // uncomment when boxTree class is fully implemented:
 
 
-  int capacity = ceil(mesh.getNumberOfFaces() * 0.05);
-  capacity = std::max(capacity, 100);
+  int capacity = 1000;
   std::cout << "Seting up acceleration data structure ..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
   
@@ -166,10 +165,10 @@ void Flyscene::paintGL(void) {
   //Y_axies.render(flycamera, scene_light);
   //Z_axies.render(flycamera, scene_light);
 
-  //boundingboxVisual = 
-
+  
   //create box
-  //boundingboxVisual.render(flycamera, scene_light);
+  boundingboxVisual.render(flycamera, scene_light);
+  
 }
 
 void Flyscene::simulate(GLFWwindow *window) {
@@ -226,7 +225,6 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	ray.resetModelMatrix();
 
-	ray.resetModelMatrix();
 
 	Eigen::Vector3f screen_pos = flycamera.screenToWorld(mouse_pos);
 	//// direction from camera center to click position
@@ -253,7 +251,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
 			Tucano::Face currTriangle = mesh.getFace(i);
 			intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
-			if (intersection != -72) {
+			if (intersection != -72.f) {
 				intersected = true;
 				if (intersection < t) {
 					t = intersection;
@@ -272,7 +270,7 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	  createHitPoint(p0);
 
 	  //Eigen::Vector3f distVec = t * dir;
-	  float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+	  float dist = std::numeric_limits<float>::max();
 	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
 	
 
@@ -295,8 +293,23 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 			  + directionLight.z() * directionLight.z());
 		  intersectionLightRays.at(i).setSize(0.005, distLight);
 	  }
+
+	  float width = octree.box.getMax().x() - octree.box.getMin().x();
+	  float height = octree.box.getMax().y() - octree.box.getMin().y();
+	  float depth = octree.box.getMax().z() - octree.box.getMin().z();
+
+
+	  boundingboxVisual = Tucano::Shapes::Box(width, height, depth);
+	  float g = 192.f / 255.f;
+	  float b = 203.f / 255.f;
+	  boundingboxVisual.setColor(Eigen::Vector4f(1.f, g, b, 0.2f));
+	  Eigen::Vector3f diff = (octree.box.getMax() - octree.box.getMin());
+	  diff *= SCALAR;
+	  createBox(diff);
   }
   else {
+	  boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+
 	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
 	  createHitPoint(p0);
 
@@ -446,7 +459,10 @@ void Flyscene::raytraceScene(int width, int height) {
 			}
 		}
 	}
+
 	std::cout << "Thread preperation done!" << endl;
+	std::cout << "Thread patitions number: " << partitions.size()<< endl;
+	std::cout << "Thread patition smallest size: " << partitions.at(partitions.size()-1).size() << endl;
 	std::cout << "Ray tracing ..." << std::endl;
 	//start a progress bar thread
 	std::thread progressBarThread(progressLoop);
@@ -478,6 +494,7 @@ void Flyscene::raytraceScene(int width, int height) {
 	done_ray_tracing = true;
 
 	progressBarThread.join();
+	pool.~ThreadPool();
 
 	pixel_data = pixel_data_copy;
 
@@ -507,6 +524,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 			ray_done_counter++;
 			mtx.unlock();
 		}
+		return BACKGROUND;
 	}
 
 	int bestIntersectionTriangleIndex = -1;
@@ -562,20 +580,8 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	if (imodel == 9) {
 		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight, false);
 	}
-	if (imodel > 2 && imodel < 7) {
-		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
-		vector<Eigen::Vector3f> reflectedLights;
-		reflectedLights.push_back(hitPoint);
 
-		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight, false);
-		if (imodel == 5) {
-			float opticalDensity = material.getOpticalDensity();
-			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
-			return fresnelIndex * Color;
-		}
-	}
-
-	if (imodel == 6 || imodel == 7) {
+	else if (imodel == 6 || imodel == 7) {
 		float c1 = abs(direction.dot(faceNormal));
 		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
 		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
@@ -587,7 +593,19 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		}
 	}
 
-	if (Color == Eigen::Vector3f(-1, -1, -1)) {
+	else if (imodel > 2 && imodel < 7) {
+		Eigen::Vector3f reflectedDirection = direction - 2 * (direction.dot(faceNormal)) * faceNormal;
+		vector<Eigen::Vector3f> reflectedLights;
+		reflectedLights.push_back(hitPoint);
+
+		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight, false);
+		if (imodel == 5) {
+			float opticalDensity = material.getOpticalDensity();
+			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
+			return fresnelIndex * Color;
+		}
+	}
+	else if (Color == Eigen::Vector3f(-1, -1, -1)) {
 		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight);
 	}
 
