@@ -108,6 +108,8 @@ public:
 
   Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
 
+  Eigen::Vector3f phongShadePoint(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
+
   float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
 
   bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
@@ -117,6 +119,8 @@ public:
   vector<Eigen::Vector3f> createSpherePoint(Eigen::Vector3f lightPoint);
 
   void modifyTriangle();
+
+  void setDebugRayDepth();
 
 private:
   // A simple phong shader for rendering meshes
@@ -190,6 +194,9 @@ private:
 
   std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> leafBoxes;
   std::vector<Tucano::Shapes::Box> leafBoxesVisual;
+
+  int maxDebugRayDepth = 2;
+
 };
 
 #endif // FLYSCENE

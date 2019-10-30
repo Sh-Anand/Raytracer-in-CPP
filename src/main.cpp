@@ -5,8 +5,8 @@
 #include "flyscene.hpp"
 #include <iostream>
 
-#define WINDOW_WIDTH 300
-#define WINDOW_HEIGHT 300
+#define WINDOW_WIDTH 1000
+#define WINDOW_HEIGHT 1000
 
 Flyscene *flyscene;
 Eigen::Vector2f mouse_pos = Eigen::Vector2f::Zero();
@@ -51,6 +51,7 @@ void initialize(void) {
             << std::endl;
   std::cout << "T    : Ray trace the scene." << std::endl;
   std::cout << "M    : Modify selected triangle." << std::endl;
+  std::cout << "N    : Set maximum recursive depth of the debug ray." << std::endl;
   std::cout << "Esc  : Close application." << std::endl;
   std::cout << " ********************************* " << std::endl;
 }
@@ -69,6 +70,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action,
 		flyscene->raytraceScene();
 	else if (key == GLFW_KEY_M && action == GLFW_PRESS)
 		flyscene->modifyTriangle();
+	else if (key == GLFW_KEY_N && action == GLFW_PRESS)
+		flyscene->setDebugRayDepth();
 }
 
 static void mouseButtonCallback(GLFWwindow *window, int button, int action,
