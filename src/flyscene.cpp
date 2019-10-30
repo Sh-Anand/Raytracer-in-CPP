@@ -280,7 +280,7 @@ void Flyscene::recursiveDebugRay(Eigen::Vector3f pos, Eigen::Vector3f dir, int n
 		float rayLength = sqrt((p0.x() - c.x()) * (p0.x() - c.x()) + (p0.y() - c.y()) * (p0.y() - c.y())
 			+ (p0.z() - c.z()) * (p0.z() - c.z()));
 		Eigen::Vector3f dest = c + dir;
-		Eigen::Vector3f hitColor = traceRay(c, dest, 0, lights, areaLight, false);
+		Eigen::Vector3f hitColor = traceRay(c, dest, 0, lights, false);
 
 		//highlight intersected triangle by outlining borders with cilinders
 		vector<GLuint> vertexIds = intersectedTriangle.vertex_ids;
@@ -991,17 +991,11 @@ vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) 
 }
 
 void Flyscene::modifyTriangle() {
-	cout << endl<< "Enter new kd : " << endl;
+	cout << endl<< "Enter coordinates to translate mesh by: " << endl;
 	float x, y, z;
 	cin >> x >> y >> z;
 	Eigen::Vector3f kd = Eigen::Vector3f(x, y, z);
-	cout << "Enter new ks: "<<endl;
-	cin >> x >> y >> z;
-	Eigen::Vector3f ks = Eigen::Vector3f(x, y, z);
 
-	Tucano::Material::Mtl newMaterial = materials[triangleToModify.material_id];
-	newMaterial.setDiffuse(kd);
-	newMaterial.setSpecular(ks);
-	materials.push_back(newMaterial);
-	triangleToModify.material_id = materials.size() - 1;
+
+	mesh.setModelMatrix(mesh.getModelMatrix().translate(kd));
 }
