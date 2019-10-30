@@ -90,7 +90,7 @@ public:
 
   void createHitPoint(Eigen::Vector3f& point);
 
-  void createBox(Eigen::Vector3f point);
+  void createBox(Eigen::Vector3f point, Tucano::Shapes::Box & box);
 
   Tucano::Mesh& getMesh();
 
@@ -175,6 +175,8 @@ private:
   
   Tucano::Face triangleToModify;
 
+  std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> leafBoxes;
+  std::vector<Tucano::Shapes::Box> leafBoxesVisual;
 };
 
 #endif // FLYSCENE

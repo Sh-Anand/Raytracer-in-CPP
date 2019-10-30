@@ -47,7 +47,8 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-						"resources/models/spheremirror.obj");
+                                    "resources/models/sphereplane1.obj");
+
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -56,8 +57,6 @@ void Flyscene::initialize(int width, int height) {
   // pass all the materials to the Phong Shader
   for (int i = 0; i < materials.size(); ++i)
     phong.addMaterial(materials[i]);
-
-  objectBox = BoundingBox::BoundingBox(getMesh());
 
   // set the color and size of the sphere to represent the light sources
   // same sphere is used for all sources
@@ -83,24 +82,35 @@ void Flyscene::initialize(int width, int height) {
   
   intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
   
+  
+
+
+  int capacity = 1000;
+
+
+  //for (int i = 0; i < 10; i++) {
+	  std::cout << "Seting up acceleration data structure ..." << std::endl;
+	  auto start = std::chrono::high_resolution_clock::now();
+
+	  octree = BoxTree::BoxTree(getMesh(), capacity);
+
+	  /*leafBoxes = octree.leafBoxes();
+
+	  for (int i = 0; i < leafBoxes.size(); i++) {
+		  leafBoxesVisual.push_back(Tucano::Shapes::Box(0.f, 0.f, 0.f));
+	  }*/
+	  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+	  std::cout << "Seting up acceleration data structure: done!" << std::endl;
+	  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
+  //}
+  
+
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
 
   glEnable(GL_DEPTH_TEST);
 
   // uncomment when boxTree class is fully implemented:
-
-
-  int capacity = 1000;
-  std::cout << "Seting up acceleration data structure ..." << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
-  
-  octree = BoxTree::BoxTree(getMesh(), capacity);
-
-  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-  std::cout << "Seting up acceleration data structure: done!" << std::endl;
-  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
-
 
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
   //   Tucano::Face face = mesh.getFace(i);    
@@ -167,10 +177,9 @@ void Flyscene::paintGL(void) {
   //X_axies.render(flycamera, scene_light);
   //Y_axies.render(flycamera, scene_light);
   //Z_axies.render(flycamera, scene_light);
-
-  
-  //create box
-  boundingboxVisual.render(flycamera, scene_light);
+  /*for (int i = 0; i < leafBoxes.size(); i++) {
+	  leafBoxesVisual.at(i).render(flycamera, scene_light);
+  }*/
   
 }
 
@@ -194,11 +203,11 @@ void Flyscene::simulate(GLFWwindow *window) {
 }
 
 // Creates (technically translates) a box at the point provided.
-void Flyscene::createBox(Eigen::Vector3f point) {
-	boundingboxVisual.resetModelMatrix();
-	Eigen::Affine3f modelMatrix = boundingboxVisual.getModelMatrix();
+void Flyscene::createBox(Eigen::Vector3f point, Tucano::Shapes::Box & box) {
+	box.resetModelMatrix();
+	Eigen::Affine3f modelMatrix = box.getModelMatrix();
 	modelMatrix.translate(point);
-	boundingboxVisual.setModelMatrix(modelMatrix);
+	box.setModelMatrix(modelMatrix);
 }
 
 
@@ -216,15 +225,6 @@ Tucano::Mesh& Flyscene::getMesh() {
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
-	// uncomment to check the results of createRootBox:
-	/*boundingBox box = createRootBox();
-
-	/*Eigen::Vector3f minimum = box.getMin();
-	Eigen::Vector3f maximum = box.getMax();
-
-	std::cout << "min:" << minimum << std::endl;
-
-	std::cout << "max:" << maximum << std::endl;*/
 
 	ray.resetModelMatrix();
 
@@ -245,13 +245,14 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
 	// check whether the debug ray hits the (root) bounding box
 	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
-
+	
 	bool intersected = false;
 	float t = std::numeric_limits<float>::max();
 	int intersectedTriangleIndex = -1;
 	if(hitBox) {
+		std::set<int> intersectedSet = octree.intersect(flycamera.getCenter(), screen_pos);
 		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
-		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
+		for (int i : intersectedSet) {
 			Tucano::Face currTriangle = mesh.getFace(i);
 			intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
 			if (intersection != -72.f) {
@@ -302,18 +303,16 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 		  intersectionLightRays.at(i).setSize(0.005, distLight);
 	  }
 
-	  float width = octree.box.getMax().x() - octree.box.getMin().x();
-	  float height = octree.box.getMax().y() - octree.box.getMin().y();
-	  float depth = octree.box.getMax().z() - octree.box.getMin().z();
-
-
-	  boundingboxVisual = Tucano::Shapes::Box(width, height, depth);
-	  float g = 192.f / 255.f;
-	  float b = 203.f / 255.f;
-	  boundingboxVisual.setColor(Eigen::Vector4f(1.f, g, b, 0.2f));
-	  Eigen::Vector3f diff = (octree.box.getMax() - octree.box.getMin());
-	  diff *= SCALAR;
-	  createBox(diff);
+	  /*for (int i = 0; i < leafBoxes.size(); i++) {
+		  float width = leafBoxes.at(i).second.x() - leafBoxes.at(i).first.x();
+		  float height = leafBoxes.at(i).second.y() - leafBoxes.at(i).first.y();
+		  float depth = leafBoxes.at(i).second.z() - leafBoxes.at(i).first.z();
+		  leafBoxesVisual.at(i) = Tucano::Shapes::Box(width, height, depth);
+		  leafBoxesVisual.at(i).setColor(Eigen::Vector4f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, 0.1f));
+		  Eigen::Vector3f diff = leafBoxes.at(i).first + ((leafBoxes.at(i).second - leafBoxes.at(i).first) /2.f);
+		  diff *= SCALAR;
+		  createBox(diff, leafBoxesVisual.at(i));
+	  }*/
   }
   else {
 	  boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
@@ -330,6 +329,10 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	  for (int i = 0; i < intersectionLightRays.size(); i++) {
 		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
 		  intersectionLightRays.at(i).setSize(0.005, 0);
+	  }
+
+	  for (int i = 0; i < leafBoxes.size(); i++) {
+		  leafBoxesVisual.at(i) = Tucano::Shapes::Box(0.f, 0.f, 0.f);
 	  }
   }
 
@@ -368,7 +371,7 @@ void printProgress(float percentage) {
 	int val = (int)(percentage * 100);
 	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
 	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	printf("\r%3d%% [%.*s%*s] %d / %d rays done", val, lpad, PROGRESS_BAR_STR, rpad, "", (int) ray_done_counter, (int) total_num_of_rays);
 	fflush(stdout);
 }
 
@@ -586,7 +589,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	float fresnelIndex = 1;
 
 	if (imodel == 9) {
-		Color = 0.10 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.90*traceRay(hitPoint, direction, level + 1, lights, false);
+			Color = 0.10 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.90 * traceRay(hitPoint, direction, level + 1, lights, false);
 	}
 
 	else if (imodel == 6 || imodel == 7) {
@@ -789,16 +792,26 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 		origin = lights[l];
 		direction = hitPoint - origin;
 		//Loop through all of the faces
-		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-			//get a direction vector
-			currTriangle = mesh.getFace(i);
-			if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
-				continue;
+
+		//Check whether the ray hits the (root) bounding box
+		bool hitBox = octree.box.boxIntersect(origin, hitPoint);
+
+
+		if (!hitBox) {
+			std::set<int> faces = octree.intersect(origin, hitPoint);
+
+			for (int i : faces) {
+				//get a direction vector
+				currTriangle = mesh.getFace(i);
+				if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
+					continue;
+				}
+				intersection = rayTriangleIntersection(origin, direction, currTriangle);
+				if (intersection != -72 && intersection < t && intersection > 0.00001) {
+					t = intersection;
+				}
 			}
-			intersection = rayTriangleIntersection(origin, direction, currTriangle);
-			if (intersection != -72 && intersection < t && intersection > 0.00001) {
-				t = intersection;
-			}
+
 		}
 
 		if (t >= 0.98) {
