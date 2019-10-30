@@ -1,4 +1,4 @@
-#include "flyscene.hpp"
+﻿#include "flyscene.hpp"
 #include "ThreadPool.h"
 #include <GLFW/glfw3.h>
 #include<iostream>
@@ -372,6 +372,19 @@ void Flyscene::recursiveDebugRay(Eigen::Vector3f pos, Eigen::Vector3f dir, int n
 		std::cout << " Normal vector = "; printVector(normalTri); std::cout << std::endl;
 		std::cout << " Reflection vector = "; printVector(reflectedDir); std::cout << std::endl;
 		std::cout << " Color rendered = "; printVector(hitColor); std::cout << std::endl;
+		float shiny = materials[intersectedTriangle.material_id].getShininess();
+		std::cout << " shininess = "; shiny; std::cout << std::endl;
+		std::cout << std::endl;
+		std::cout << " LIGHTS INFO                    " << std::endl;
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			std::cout << " ----light " << i << " ----" << std::endl;
+			Eigen::Vector3f directionLight = (p0 - lights.at(i)).normalized();
+			std::cout << " Light direction vector = "; printVector(directionLight); std::cout << std::endl;
+			float cosTheta = directionLight.dot(normalTri);
+			float cosPhi = ((-1 * (p0 - flycamera.getCenter())).normalized()).dot(reflectedDir);
+			std::cout << " cos (Theta) = "; cosTheta; std::cout << std::endl;
+			std::cout << " cos (Phi)   = "; cosPhi; std::cout << std::endl;
+		}
 		std::cout << std::endl;
 		std::cout << " HIT TRIANGLE INFO                    " << std::endl;
 		std::cout << "                   Vertex 1 = "; printVector(vC1); std::cout << std::endl;
