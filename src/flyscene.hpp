@@ -81,7 +81,7 @@ public:
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight, bool countRay);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool countRay);
 
 
   float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);

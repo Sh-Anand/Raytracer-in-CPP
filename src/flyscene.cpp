@@ -47,7 +47,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-						"resources/models/sphereMirror.obj");
+						"resources/models/spheremirror.obj");
 
 
   // normalize the model (scale to unit cube and center at origin)
@@ -489,7 +489,7 @@ void Flyscene::raytraceScene(int width, int height) {
 				pair<Eigen::Vector3f, Eigen::Vector2f> partition_element = thread_partition[k];
 				Eigen::Vector3f direction = partition_element.first - origina;
 				pixel_data_copy[partition_element.second[0]][partition_element.second[1]] =
-					traceRay(origina, direction, 0, lights, areaLight, true);
+					traceRay(origina, direction, 0, lights, true);
 			}
 		};
 		results.emplace_back(pool.enqueue(f));
@@ -520,7 +520,7 @@ void Flyscene::raytraceScene(int width, int height) {
 
 
 Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
-	Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool areaLight, bool countRay) {
+	Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool countRay) {
 
 	//Check whether the ray hits the (root) bounding box
 	bool hitBox = octree.box.boxIntersect(origin, origin+direction);
@@ -586,7 +586,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	float fresnelIndex = 1;
 
 	if (imodel == 9) {
-		Color =  traceRay(hitPoint, direction, level + 1, lights, areaLight, false);
+		Color = 0.10 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.90*traceRay(hitPoint, direction, level + 1, lights, false);
 	}
 
 	else if (imodel == 6 || imodel == 7) {
@@ -594,10 +594,10 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
 		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
 		if (imodel == 7) {
-			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, false);
 		}
 		else {
-			Color = traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+			Color = traceRay(hitPoint, refractedRay, level + 1, lights, false);
 		}
 	}
 
@@ -606,7 +606,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		vector<Eigen::Vector3f> reflectedLights;
 		reflectedLights.push_back(hitPoint);
 
-		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight, false);
+		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, false);
 		if (imodel == 5) {
 			float opticalDensity = material.getOpticalDensity();
 			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
@@ -619,10 +619,10 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
 		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
 		if (imodel == 7) {
-			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, false);
 		}
 		else {
-			Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8* traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+			Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8* traceRay(hitPoint, refractedRay, level + 1, lights, false);
 		}
 	}
 
