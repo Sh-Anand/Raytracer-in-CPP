@@ -58,7 +58,15 @@ public:
    */
   void addLight(void) {
 	  lights.push_back(flycamera.getCenter());
+	  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+	  intersectionLightRays.at(intersectionLightRays.size() - 1).setSize(0.005, 1);
   }
+
+  /**
+  * @brief Print vector in the form "(x, y, z)" for debugging purposes
+  * @param vector Vector to be printed.
+  */
+  void printVector(const Eigen::Vector3f vector);
 
   /**
    * @brief Create a debug ray at the current camera location and passing
@@ -67,6 +75,8 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+
+  void recursiveDebugRay(const Eigen::Vector3f pos, const Eigen::Vector3f dir, const int n, Eigen::Vector3f screen_pos);
 
   /**
    * @brief raytrace your scene from current camera position   
@@ -113,7 +123,7 @@ private:
   Tucano::Effects::PhongMaterial phong;
 
   /// A small debug sphere to see where ray intersects
-  Tucano::Shapes::Sphere hitCircle = Tucano::Shapes::Sphere(0.02);
+  vector<Tucano::Shapes::Sphere> hitCircles;
 
   // A fly through camera
   Tucano::Flycamera flycamera;
@@ -137,14 +147,17 @@ private:
   /// A very thin cylinder to draw a debug ray
   Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
 
-  /// Intersected normal
-  Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+  /// reflected light rays
+  vector<Tucano::Shapes::Cylinder> reflectedRays;
 
-  /// Intersected normal
-  Tucano::Shapes::Cylinder intersectNormal = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+  /// Intersected normalw
+  vector<Tucano::Shapes::Cylinder> intersectNormals;
 
   // light sources for ray tracing
   vector<Tucano::Shapes::Cylinder> intersectionLightRays;
+
+  //triangle borders
+  vector<Tucano::Shapes::Cylinder> triangleBorders;
 
   // Scene meshes
   Tucano::Mesh mesh;
