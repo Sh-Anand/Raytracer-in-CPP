@@ -1,6 +1,6 @@
 #include "boxTree.hpp"
 
-#define MAX_DEPTH 10
+#define MAX_DEPTH 15
 BoxTree::BoxTree(BoundingBox box, int capacity) {
 	this->box = box;
 	this->capacity = capacity;

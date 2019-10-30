@@ -47,7 +47,7 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/dodgeColorTest.obj");
   //dodgeColorTest
 
 
@@ -86,19 +86,24 @@ void Flyscene::initialize(int width, int height) {
 
 
   int capacity = 1000;
-  std::cout << "Seting up acceleration data structure ..." << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
+
+
+  //for (int i = 0; i < 10; i++) {
+	  std::cout << "Seting up acceleration data structure ..." << std::endl;
+	  auto start = std::chrono::high_resolution_clock::now();
+
+	  octree = BoxTree::BoxTree(getMesh(), capacity);
+
+	  /*leafBoxes = octree.leafBoxes();
+
+	  for (int i = 0; i < leafBoxes.size(); i++) {
+		  leafBoxesVisual.push_back(Tucano::Shapes::Box(0.f, 0.f, 0.f));
+	  }*/
+	  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+	  std::cout << "Seting up acceleration data structure: done!" << std::endl;
+	  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
+  //}
   
-  octree = BoxTree::BoxTree(getMesh(), capacity);
-
-  /*leafBoxes = octree.leafBoxes();
-
-  for (int i = 0; i < leafBoxes.size(); i++) {
-	  leafBoxesVisual.push_back(Tucano::Shapes::Box(0.f, 0.f, 0.f));
-  }*/
-  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-  std::cout << "Seting up acceleration data structure: done!" << std::endl;
-  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
 
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
@@ -366,7 +371,7 @@ void printProgress(float percentage) {
 	int val = (int)(percentage * 100);
 	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
 	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	printf("\r%3d%% [%.*s%*s] %d / %d rays done", val, lpad, PROGRESS_BAR_STR, rpad, "", (int) ray_done_counter, (int) total_num_of_rays);
 	fflush(stdout);
 }
 
@@ -787,16 +792,26 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 		origin = lights[l];
 		direction = hitPoint - origin;
 		//Loop through all of the faces
-		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-			//get a direction vector
-			currTriangle = mesh.getFace(i);
-			if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
-				continue;
+
+		//Check whether the ray hits the (root) bounding box
+		bool hitBox = octree.box.boxIntersect(origin, hitPoint);
+
+
+		if (!hitBox) {
+			std::set<int> faces = octree.intersect(origin, hitPoint);
+
+			for (int i : faces) {
+				//get a direction vector
+				currTriangle = mesh.getFace(i);
+				if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
+					continue;
+				}
+				intersection = rayTriangleIntersection(origin, direction, currTriangle);
+				if (intersection != -72 && intersection < t && intersection > 0.00001) {
+					t = intersection;
+				}
 			}
-			intersection = rayTriangleIntersection(origin, direction, currTriangle);
-			if (intersection != -72 && intersection < t && intersection > 0.00001) {
-				t = intersection;
-			}
+
 		}
 
 		if (t >= 0.98) {
