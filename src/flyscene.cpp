@@ -1,4 +1,4 @@
-#include "flyscene.hpp"
+﻿#include "flyscene.hpp"
 #include "ThreadPool.h"
 #include <GLFW/glfw3.h>
 #include<iostream>
@@ -7,6 +7,8 @@
 #include <ctime>
 #include "../arealight.hpp"
 #include "../arealight.cpp"
+#include <random>
+#include <iomanip>
 #define BACKGROUND Eigen::Vector3f(1.f, 1.f, 1.f)
 #define SHADOW Eigen::Vector3f(0.f, 0.f, 0.f)
 #define PROGRESS_BAR_STR "=================================================="
@@ -28,6 +30,8 @@ void Flyscene::initialize(int width, int height) {
 
 	cout << "Enter 0 if Point Lights or 1 if Area Lights : " << endl;
 	cin >> areaLight;
+	cout << "Enter 0 if spherical or 1 if point : " << endl;
+	cin >> pointLight;
   // initiliaze the Phong Shading effect for the Opengl Previewer
   phong.initialize();
 
@@ -44,8 +48,9 @@ void Flyscene::initialize(int width, int height) {
 
   // load the OBJ file and materials
   Tucano::MeshImporter::loadObjFile(mesh, materials,
-                                    "resources/models/cube.obj");
+                                    "resources/models/dodgeColorTest.obj");
   //dodgeColorTest
+
 
   // normalize the model (scale to unit cube and center at origin)
   mesh.normalizeModelMatrix();
@@ -54,8 +59,10 @@ void Flyscene::initialize(int width, int height) {
   for (int i = 0; i < materials.size(); ++i)
     phong.addMaterial(materials[i]);
 
-  objectBox = BoundingBox::BoundingBox(getMesh());
 
+  for (int i = 0; i < 3; i++) {
+	  triangleBorders.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+  }
   // set the color and size of the sphere to represent the light sources
   // same sphere is used for all sources
   lightrep.setColor(Eigen::Vector4f(1.0, 1.0, 0.0, 1.0));
@@ -70,34 +77,38 @@ void Flyscene::initialize(int width, int height) {
   // the debug ray is a cylinder, set the radius and length of the cylinder
   ray.setSize(0.005, 1.f);
 
-  //Set up triangle normal from intersection
-  intersectNormal.setSize(0.005, 10.0);
-
-  //Set up reflected ray
-  reflectedRay.setSize(0.005, 10.0);
-
-
   
   intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
   
+  hitCircles.push_back(Tucano::Shapes::Sphere(0.02));
+
+
+  int capacity = 1000;
+
+
+  //for (int i = 0; i < 10; i++) {
+	  std::cout << "Seting up acceleration data structure ..." << std::endl;
+	  auto start = std::chrono::high_resolution_clock::now();
+
+	  octree = BoxTree::BoxTree(getMesh(), capacity);
+
+	  /*leafBoxes = octree.leafBoxes();
+
+	  for (int i = 0; i < leafBoxes.size(); i++) {
+		  leafBoxesVisual.push_back(Tucano::Shapes::Box(0.f, 0.f, 0.f));
+	  }*/
+	  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
+	  std::cout << "Seting up acceleration data structure: done!" << std::endl;
+	  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
+  //}
+  
+
   // craete a first debug ray pointing at the center of the screen
   createDebugRay(Eigen::Vector2f(width / 2.0, height / 2.0));
 
   glEnable(GL_DEPTH_TEST);
 
   // uncomment when boxTree class is fully implemented:
-
-
-  int capacity = 1000;
-  std::cout << "Seting up acceleration data structure ..." << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
-  
-  octree = BoxTree::BoxTree(getMesh(), capacity);
-
-  std::chrono::duration<double> elapsed = std::chrono::high_resolution_clock::now() - start;
-  std::cout << "Seting up acceleration data structure: done!" << std::endl;
-  std::cout << "ELAPSED TIME:" << elapsed.count() << endl;
-
 
   // for (int i = 0; i<mesh.getNumberOfFaces(); ++i){
   //   Tucano::Face face = mesh.getFace(i);    
@@ -128,7 +139,10 @@ void Flyscene::paintGL(void) {
   scene_light.resetViewMatrix();
   scene_light.viewMatrix()->translate(-lights.back());
 
-  hitCircle.render(flycamera, scene_light);
+  //render hitCircles
+  for (Tucano::Shapes::Sphere hitCircle : hitCircles) {
+	  hitCircle.render(flycamera, scene_light);
+  }
 
   // render the scene using OpenGL and one light source
   phong.render(mesh, flycamera, scene_light);
@@ -137,17 +151,25 @@ void Flyscene::paintGL(void) {
   ray.render(flycamera, scene_light);
   camerarep.render(flycamera, scene_light);
   
-  reflectedRay.render(flycamera, scene_light);
+  for (Tucano::Shapes::Cylinder rRay : reflectedRays) {
+	  rRay.render(flycamera, scene_light);
+  }
 
   //render intersection of triangle normal
-  intersectNormal.render(flycamera, scene_light);
+  for (Tucano::Shapes::Cylinder intersectNormal : intersectNormals) {
+	  intersectNormal.render(flycamera, scene_light);
+  }
 
-  hitCircle.render(flycamera, scene_light);
+  //hitCircle.render(flycamera, scene_light);
 
   for (Tucano::Shapes::Cylinder light : intersectionLightRays) {
 	  light.render(flycamera, scene_light);
   }
   
+  //render triangle borders
+  for (int i = 0; i < triangleBorders.size(); ++i) {
+	  triangleBorders.at(i).render(flycamera, scene_light);
+  }
 
   // render ray tracing light sources as yellow spheres
   for (int i = 0; i < lights.size(); ++i) {
@@ -164,10 +186,9 @@ void Flyscene::paintGL(void) {
   //X_axies.render(flycamera, scene_light);
   //Y_axies.render(flycamera, scene_light);
   //Z_axies.render(flycamera, scene_light);
-
-  
-  //create box
-  boundingboxVisual.render(flycamera, scene_light);
+  /*for (int i = 0; i < leafBoxes.size(); i++) {
+	  leafBoxesVisual.at(i).render(flycamera, scene_light);
+  }*/
   
 }
 
@@ -191,37 +212,223 @@ void Flyscene::simulate(GLFWwindow *window) {
 }
 
 // Creates (technically translates) a box at the point provided.
-void Flyscene::createBox(Eigen::Vector3f point) {
-	boundingboxVisual.resetModelMatrix();
-	Eigen::Affine3f modelMatrix = boundingboxVisual.getModelMatrix();
+void Flyscene::createBox(Eigen::Vector3f point, Tucano::Shapes::Box & box) {
+	box.resetModelMatrix();
+	Eigen::Affine3f modelMatrix = box.getModelMatrix();
 	modelMatrix.translate(point);
-	boundingboxVisual.setModelMatrix(modelMatrix);
+	box.setModelMatrix(modelMatrix);
 }
 
 
 // Creates (technically translates) a sphere at the point provided.
 void Flyscene::createHitPoint(Eigen::Vector3f& point) {
-	hitCircle.resetModelMatrix();
-	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
-	modelMatrix.translate(point);
-	hitCircle.setModelMatrix(modelMatrix);
+	for (Tucano::Shapes::Sphere hitCircle : hitCircles) {
+		hitCircle.resetModelMatrix();
+		Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
+		modelMatrix.translate(point);
+		hitCircle.setModelMatrix(modelMatrix);
+	}
+}
+
+void Flyscene::printVector(const Eigen::Vector3f vector) {
+	std::cout << "(" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")";
 }
 
 Tucano::Mesh& Flyscene::getMesh() {
 	return mesh;
 }
 
+void Flyscene::recursiveDebugRay(Eigen::Vector3f pos, Eigen::Vector3f dir, int n, Eigen::Vector3f screen_pos) {
+	if (n > 2) {
+		return;
+	}
+	Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+	//// check whether the debug ray hits the (root) bounding box
+	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
+	//
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+	int intersectedTriangleIndex = -1;
+	if(hitBox) {
+		std::set<int> intersectedSet = octree.intersect(flycamera.getCenter(), screen_pos);
+		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
+		for (int i : intersectedSet) {
+			Tucano::Face currTriangle = mesh.getFace(i);
+			float intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
+			if (intersection != -72.f) {
+				intersected = true;
+				if (intersection < t) {
+					t = intersection;
+					intersectedTriangleIndex = i;
+				}
+				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
+			}
+		}
+	}
+	else {
+		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
+	}
+
+	if (intersected) {
+		//std::cout << "t = " << t << std::endl;
+		Eigen::Vector3f c = flycamera.getCenter();
+		Tucano::Face intersectedTriangle = mesh.getFace(intersectedTriangleIndex);
+
+		Eigen::Vector3f p0 = pos + (t * dir);
+		createHitPoint(p0);
+		float rayLength = sqrt((p0.x() - c.x()) * (p0.x() - c.x()) + (p0.y() - c.y()) * (p0.y() - c.y())
+			+ (p0.z() - c.z()) * (p0.z() - c.z()));
+		Eigen::Vector3f dest = c + dir;
+		Eigen::Vector3f hitColor = traceRay(c, dest, 0, lights, areaLight, false);
+
+		//highlight intersected triangle by outlining borders with cilinders
+		vector<GLuint> vertexIds = intersectedTriangle.vertex_ids;
+		Eigen::Vector3f vC1;
+		Eigen::Vector3f vC2;
+		Eigen::Vector3f vC3;
+		int count = 0;
+		for (GLuint idd : vertexIds) {
+			int id = idd + 1 - 1;
+			Eigen::Vector4f vertex = mesh.getShapeModelMatrix() * mesh.getVertex(id);
+			/*std::cout << "vertex " << id << " : (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")"
+				<< std::endl;*/
+			Eigen::Vector3f vertex3f = Eigen::Vector3f(vertex.x(), vertex.y(), vertex.z());
+			switch (count) {
+			case 0:
+				vC1 = vertex3f;
+				break;
+			case 1:
+				vC2 = vertex3f;
+				break;
+			default:
+				vC3 = vertex3f;
+			}
+			count += 1;
+		}
+
+		for (int i = 0; i < 3; ++i) {
+			Eigen::Vector3f v1, v2;
+			switch (i) {
+			case 0:
+				v1 = vC1;
+				v2 = vC2;
+				break;
+			case 1:
+				v1 = vC2;
+				v2 = vC3;
+				break;
+			default:
+				v1 = vC3;
+				v2 = vC1;
+			}
+			Eigen::Vector3f diff = v2 - v1;
+			float size = sqrt(diff.x() * diff.x() + diff.y() * diff.y() + diff.z() * diff.z());
+			Eigen::Vector3f diffNormalized = diff / size;
+			triangleBorders.push_back(Tucano::Shapes::Cylinder(0.02f, size, 4, 8));
+			triangleBorders.at(i).setSize(0.005f, size);
+			triangleBorders.at(i).setOriginOrientation(v1, diffNormalized);
+			triangleBorders.at(i).setColor(Eigen::Vector4f(1 - hitColor.x(), 1 - hitColor.y(), 1 - hitColor.z(), 1.f));
+			/*std::cout << "Border " << i + 1 << " : origin = (" << v1.x() << ", " << v1.y() << ", " << v1.z() << ")"
+				<< std::endl << "           direction = (" << diff.x() << ", " << diff.y() << ", " << diff.z() << ")"
+				<< std::endl;*/
+		}
+
+		//Eigen::Vector3f distVec = t * dir;
+		float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+		Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
+
+		Tucano::Shapes::Cylinder intersectNormal = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+		intersectNormal.setOriginOrientation(p0, normalTri);
+		intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+		intersectNormal.setSize(0.005, 0.3);
+		intersectNormals.push_back(intersectNormal);
+
+		Eigen::Vector3f reflectedDir = dir - 2 * dir.dot(normalTri) * normalTri;
+		reflectedRay.setOriginOrientation(p0, reflectedDir);
+		reflectedRay.setSize(0.005, dist);
+		reflectedRays.push_back(reflectedRay);
+
+		if (n == 0) {
+			ray.setSize(0.005, rayLength);
+		}
+
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			Eigen::Vector3f directionLight = (p0 - lights.at(i));
+			intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
+			intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
+			float distLight = sqrt(directionLight.x() * directionLight.x()
+				+ directionLight.y() * directionLight.y()
+				+ directionLight.z() * directionLight.z());
+			intersectionLightRays.at(i).setSize(0.005, distLight);
+		}
+
+		std::cout << std::endl;
+		std::cout << "-------------------------------------------------------------" << std::endl;
+		std::cout << "                      DEBUG RAY INFO " << "(level = " << n << ")" << std::endl;
+		std::cout << "                      ==============                       " << std::endl;
+		std::cout << std::endl;
+		std::cout << " Hitpoint = "; printVector(p0); std::cout << std::endl;
+		std::cout << " Distance = " << rayLength << std::endl;
+		std::cout << " Normal vector = "; printVector(normalTri); std::cout << std::endl;
+		std::cout << " Reflection vector = "; printVector(reflectedDir); std::cout << std::endl;
+		std::cout << " Color rendered = "; printVector(hitColor); std::cout << std::endl;
+		float shiny = materials[intersectedTriangle.material_id].getShininess();
+		std::cout.precision(4);
+		std::cout << " shininess = "; 
+		std::cout << std::setw(5) << shiny; std::cout << std::endl;
+		std::cout << std::endl;
+		std::cout << " LIGHTS INFO                    " << std::endl;
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			std::cout << " ----light " << i << " ----" << std::endl;
+			Eigen::Vector3f directionLight = (p0 - lights.at(i)).normalized();
+			std::cout << " Light direction vector = "; printVector(directionLight); std::cout << std::endl;
+			float cosTheta = directionLight.dot(normalTri);
+			float cosPhi = ((-1 * (p0 - flycamera.getCenter())).normalized()).dot(reflectedDir);
+			std::cout << " cos (Theta) = "; 
+			std::cout.precision(4);
+			std::cout << std::setw(5) << cosTheta; std::cout << std::endl;
+			std::cout << " cos (Phi)   = ";
+			std::cout.precision(4);
+			std::cout << std::setw(5) << cosPhi; std::cout << std::endl;
+		}
+		std::cout << std::endl;
+		std::cout << " HIT TRIANGLE INFO                    " << std::endl;
+		std::cout << "                   Vertex 1 = "; printVector(vC1); std::cout << std::endl;
+		std::cout << "                   Vertex 2 = "; printVector(vC2); std::cout << std::endl;
+		std::cout << "                   Vertex 3 = "; printVector(vC3); std::cout << std::endl;
+		std::cout << "-------------------------------------------------------------" << std::endl;
+		recursiveDebugRay(p0, reflectedDir, n + 1, screen_pos);
+	}
+
+	else {
+		Eigen::Vector3f p0 = pos + (std::numeric_limits<float>::max() * dir);
+		createHitPoint(p0);
+
+		//intersectNormal.setSize(0.005, 0);
+		reflectedRay.setSize(0.005, 0);
+		reflectedRays.push_back(reflectedRay);
+
+		if (n == 0) {
+			ray.setSize(0.005, std::numeric_limits<float>::max());
+		}
+
+
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
+			intersectionLightRays.at(i).setSize(0.005, 0);
+		}
+
+		//boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+		//  for (int i = 0; i < leafBoxes.size(); i++) {
+		//	  leafBoxesVisual.at(i) = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+		//  }
+	}
+}
+
+
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
-	// uncomment to check the results of createRootBox:
-	/*boundingBox box = createRootBox();
-
-	/*Eigen::Vector3f minimum = box.getMin();
-	Eigen::Vector3f maximum = box.getMax();
-
-	std::cout << "min:" << minimum << std::endl;
-
-	std::cout << "max:" << maximum << std::endl;*/
 
 	ray.resetModelMatrix();
 
@@ -237,105 +444,32 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	camerarep.resetModelMatrix();
 	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 
-	float intersection;
-
-
-	// check whether the debug ray hits the (root) bounding box
-	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
-
-	bool intersected = false;
-	float t = std::numeric_limits<float>::max();
-	int intersectedTriangleIndex = -1;
-	if(hitBox) {
-		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
-		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-			Tucano::Face currTriangle = mesh.getFace(i);
-			intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
-			if (intersection != -72.f) {
-				intersected = true;
-				if (intersection < t) {
-					t = intersection;
-					intersectedTriangleIndex = i;
-				}
-				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
-			}
-		}
+	//float intersection;
+	while (triangleBorders.size() > 0) {
+		triangleBorders.pop_back();
 	}
-	else {
-		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
+	while (reflectedRays.size() > 0) {
+		reflectedRays.pop_back();
+	}
+	while (hitCircles.size() > 0) {
+		hitCircles.pop_back();
+	}
+	while (intersectNormals.size() > 0) {
+		intersectNormals.pop_back();
 	}
 
-  if (intersected) {
-	  Eigen::Vector3f p0 = screen_pos + (t * dir);
-	  createHitPoint(p0);
-
-	  //Eigen::Vector3f distVec = t * dir;
-	  float dist = std::numeric_limits<float>::max();
-	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
+	recursiveDebugRay(screen_pos, dir, 0, screen_pos);
+	boxMin.resetModelMatrix();\
+	Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
+	boxMinModelMatrix.translate(objectBox.getMin());
+	boxMin.setModelMatrix(boxMinModelMatrix);
+	boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 	
-
-	  intersectNormal.setOriginOrientation(p0, normalTri);
-	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
-	  intersectNormal.setSize(0.005, 0.3);
-
-	  reflectedRay.setOriginOrientation(p0, dir - 2 * dir.dot(normalTri) * normalTri);
-	  reflectedRay.setSize(0.005, dist);
-
-	  ray.setSize(0.005, dist);
-
-
-	  for (int i = 0; i < intersectionLightRays.size(); i++) {
-		  Eigen::Vector3f directionLight = (p0 - lights.at(i));
-		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
-		  intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
-		  float distLight = sqrt(directionLight.x() * directionLight.x() 
-			  + directionLight.y() * directionLight.y() 
-			  + directionLight.z() * directionLight.z());
-		  intersectionLightRays.at(i).setSize(0.005, distLight);
-	  }
-
-	  float width = octree.box.getMax().x() - octree.box.getMin().x();
-	  float height = octree.box.getMax().y() - octree.box.getMin().y();
-	  float depth = octree.box.getMax().z() - octree.box.getMin().z();
-
-
-	  boundingboxVisual = Tucano::Shapes::Box(width, height, depth);
-	  float g = 192.f / 255.f;
-	  float b = 203.f / 255.f;
-	  boundingboxVisual.setColor(Eigen::Vector4f(1.f, g, b, 0.2f));
-	  Eigen::Vector3f diff = (octree.box.getMax() - octree.box.getMin());
-	  diff *= SCALAR;
-	  createBox(diff);
-  }
-  else {
-	  boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
-
-	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
-	  createHitPoint(p0);
-
-	  intersectNormal.setSize(0.005, 0);
-	  reflectedRay.setSize(0.005, 0);
-
-	  ray.setSize(0.005, std::numeric_limits<float>::max());
-
-
-	  for (int i = 0; i < intersectionLightRays.size(); i++) {
-		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
-		  intersectionLightRays.at(i).setSize(0.005, 0);
-	  }
-  }
-
-  boxMin.resetModelMatrix();
-  Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
-  boxMinModelMatrix.translate(objectBox.getMin());
-  boxMin.setModelMatrix(boxMinModelMatrix);
-  boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
-
-  boxMax.resetModelMatrix();
-  Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
-  boxMaxModelMatrix.translate(objectBox.getMax());
-  boxMax.setModelMatrix(boxMaxModelMatrix);
-  boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+	boxMax.resetModelMatrix();
+	Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
+	boxMaxModelMatrix.translate(objectBox.getMax());\
+	boxMax.setModelMatrix(boxMaxModelMatrix);
+	boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 
 
   //Show X, Y and Z axies
@@ -360,7 +494,7 @@ void printProgress(float percentage) {
 	int val = (int)(percentage * 100);
 	int lpad = (int)(percentage * PROGRESS_BAR_WIDTH);
 	int rpad = PROGRESS_BAR_WIDTH - lpad;
-	printf("\r%3d%% [%.*s%*s]", val, lpad, PROGRESS_BAR_STR, rpad, "");
+	printf("\r%3d%% [%.*s%*s] %d / %d rays done", val, lpad, PROGRESS_BAR_STR, rpad, "", (int) ray_done_counter, (int) total_num_of_rays);
 	fflush(stdout);
 }
 
@@ -453,8 +587,8 @@ void Flyscene::raytraceScene(int width, int height) {
 				partition.clear();
 				//if a chunk of rays are not hitting the box, decrease partition size
 				if (counter_ray / (raytracing_image_size[0] * raytracing_image_size[1]) > percentage) {
-					percentage += 0.1f;
-					partition_size = ceil(partition_size/4);
+					percentage += percentage;
+					partition_size = ceil(partition_size/2);
 				}
 			}
 		}
@@ -578,7 +712,7 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 	float fresnelIndex = 1;
 
 	if (imodel == 9) {
-		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight, false);
+		Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8 * traceRay(hitPoint, direction, level + 1, lights, areaLight, false);
 	}
 
 	else if (imodel == 6 || imodel == 7) {
@@ -598,15 +732,28 @@ Eigen::Vector3f Flyscene::traceRay(Eigen::Vector3f& origin,
 		vector<Eigen::Vector3f> reflectedLights;
 		reflectedLights.push_back(hitPoint);
 
-		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight, false);
+		Color = 0.15 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.85 * traceRay(hitPoint, reflectedDirection, level + 1, reflectedLights, areaLight, false);
 		if (imodel == 5) {
 			float opticalDensity = material.getOpticalDensity();
 			fresnelIndex = fresnel(reflectedDirection, faceNormal, opticalDensity);
 			return fresnelIndex * Color;
 		}
 	}
-	else if (Color == Eigen::Vector3f(-1, -1, -1)) {
-		Color = phongShade(origin, hitPoint, intersectTriangle, lights, visibleLights, areaLight);
+
+	if (imodel == 6 || imodel == 7) {
+		float c1 = abs(direction.dot(faceNormal));
+		float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
+		Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * direction + ((1 / material.getOpticalDensity()) * c1 - c2) * faceNormal;
+		if (imodel == 7) {
+			Color = fresnelIndex * Color + (1 - fresnelIndex) * traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+		}
+		else {
+			Color = 0.2 * phongShade(origin, hitPoint, intersectTriangle, lights) + 0.8* traceRay(hitPoint, refractedRay, level + 1, lights, areaLight, false);
+		}
+	}
+
+	if (Color == Eigen::Vector3f(-1, -1, -1)) {
+		Color = phongShade(origin, hitPoint, intersectTriangle, lights);
 	}
 
 
@@ -669,40 +816,43 @@ float Flyscene::rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector
 }
 
 //Computes phong shading at the given point with interpolated normals.
-Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights, bool visibleLights[], bool areaLight) {
+Eigen::Vector3f Flyscene::phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lightsp) {
 
 	Eigen::Vector3f lightIntensity = lightrep.getColor().head<3>();
 
 	Tucano::Material::Mtl material = materials[triangle.material_id];
 	//Eigen::Vector3f ambient = lightIntensity.cwiseProduct(material.getAmbient());
-	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+	Eigen::Vector3f colour = Eigen::Vector3f(0.0, 0.0, 0.0), finalColour = Eigen::Vector3f(0.0,0.0,0.0);
 	Eigen::Vector3f normal = (mesh.getModelMatrix() * getInterpolatedNormal(hitPoint, triangle)).normalized();
+	vector<Eigen::Vector3f> lights;
+	for (int l = 0; l < lightsp.size(); l++) {
+		float sum = 0;
+		colour = Eigen::Vector3f(0.0, 0.0, 0.0);
+		lights = createSpherePoint(lightsp.at(l));
+		bool visibleLights[25];
+		lightStrikes(hitPoint, lights, visibleLights);
+		for (int i = 0; i < lights.size(); i++) {
 
-	float sum = 0;
-
-	for (int i = 0; i < lights.size(); i++) {
-
-		if (!areaLight && !visibleLights[i]) {
-			continue;
-		}
-		else if (visibleLights[i]) {
+			if (!visibleLights[i]) {
+				continue;
+			}
 			sum++;
+
+			Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
+
+			float costheta = max(0.0f, lightDirection.dot(normal));
+			Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
+
+			Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
+			Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - origin)).normalized();
+			float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
+			Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
+
+			colour += diffuse + specular;
 		}
-		Eigen::Vector3f lightDirection = (lights.at(i) - hitPoint).normalized();
-
-		float costheta = max(0.0f, lightDirection.dot(normal));
-		Eigen::Vector3f diffuse = lightIntensity.cwiseProduct(material.getDiffuse()) * costheta;
-
-		Eigen::Vector3f reflectedLight = (lightDirection - ((2 * lightDirection.dot(normal)) * normal)).normalized();
-		Eigen::Vector3f eyeToHitPoint = (-1 * (hitPoint - origin)).normalized();
-		float cosphi = std::max(0.0f, eyeToHitPoint.dot(-1 * reflectedLight));
-		Eigen::Vector3f specular = lightIntensity.cwiseProduct(material.getSpecular()) * pow(cosphi, material.getShininess());
-
-		colour += diffuse + specular;
+		finalColour += colour*(sum / lights.size()) * (1.3f / lights.size());
 	}
-	if (areaLight)
-		return colour * (sum / lights.size()) * (1.3f / lights.size());
-	return colour;
+	return finalColour;
 }
 
 //Computes the interpolated normal for the given point on the triangle.
@@ -765,16 +915,26 @@ bool Flyscene::lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& 
 		origin = lights[l];
 		direction = hitPoint - origin;
 		//Loop through all of the faces
-		for (int i = 0; i < mesh.getNumberOfFaces(); i++) {
-			//get a direction vector
-			currTriangle = mesh.getFace(i);
-			if (materials[currTriangle.material_id].getIlluminationModel() == 9) {
-				continue;
+
+		//Check whether the ray hits the (root) bounding box
+		bool hitBox = octree.box.boxIntersect(origin, hitPoint);
+
+
+		if (!hitBox) {
+			std::set<int> faces = octree.intersect(origin, hitPoint);
+
+			for (int i : faces) {
+				//get a direction vector
+				currTriangle = mesh.getFace(i);
+				if (materials[currTriangle.material_id].getIlluminationModel() == 9 || materials[currTriangle.material_id].getIlluminationModel() == 6) {
+					continue;
+				}
+				intersection = rayTriangleIntersection(origin, direction, currTriangle);
+				if (intersection != -72 && intersection < t && intersection > 0.00001) {
+					t = intersection;
+				}
 			}
-			intersection = rayTriangleIntersection(origin, direction, currTriangle);
-			if (intersection != -72 && intersection < t && intersection > 0.00001) {
-				t = intersection;
-			}
+
 		}
 
 		if (t >= 0.98) {
@@ -792,4 +952,56 @@ arealight Flyscene::createAreaLight(Eigen::Vector3f corner, float lengthX, float
 	Eigen::Vector3f uvec = corner + lengthX * (Eigen::Vector3f(1, 0, 0));
 	Eigen::Vector3f vvec = corner + lengthY * (Eigen::Vector3f(0, 1, 0));
 	return arealight(corner, uvec, usteps, vvec, vsteps);
+}
+
+vector<Eigen::Vector3f> Flyscene::createSpherePoint(Eigen::Vector3f lightPoint) {
+
+	if (pointLight) {
+		vector<Eigen::Vector3f> lightss;
+		lightss.push_back(lightPoint);
+		return lightss;
+	}
+
+	if (areaLight) {
+		return createAreaLight(lightPoint, 0.3, 0.15, 5, 5).getPointLights();
+	}
+
+	float sphereRadius = lightrep.getBoundingSphereRadius();
+	vector<Eigen::Vector3f> lightPoints;
+	for (int i = 0; i < 25; i++) {
+
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<> dis(0, 1);
+
+		float randomno = dis(gen);
+		float theta = 2.0f * M_PI * randomno;
+		float phi = acos(2.0 * randomno - 1.0);
+
+
+		float x = sphereRadius * sin(phi) * cos(theta);
+		float y = sphereRadius * sin(phi) * sin(theta);
+		float z = sphereRadius * cos(phi);
+		Eigen::Vector3f pointOnSphere = Eigen::Vector3f(x, y, z)/5 + lightPoint;
+		//std::cout << pointOnSphere << endl;
+		lightPoints.push_back(pointOnSphere);
+	}
+
+	return lightPoints;
+}
+
+void Flyscene::modifyTriangle() {
+	cout << endl<< "Enter new kd : " << endl;
+	float x, y, z;
+	cin >> x >> y >> z;
+	Eigen::Vector3f kd = Eigen::Vector3f(x, y, z);
+	cout << "Enter new ks: "<<endl;
+	cin >> x >> y >> z;
+	Eigen::Vector3f ks = Eigen::Vector3f(x, y, z);
+
+	Tucano::Material::Mtl newMaterial = materials[triangleToModify.material_id];
+	newMaterial.setDiffuse(kd);
+	newMaterial.setSpecular(ks);
+	materials.push_back(newMaterial);
+	triangleToModify.material_id = materials.size() - 1;
 }
