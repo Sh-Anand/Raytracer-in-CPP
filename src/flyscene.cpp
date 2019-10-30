@@ -58,6 +58,10 @@ void Flyscene::initialize(int width, int height) {
   for (int i = 0; i < materials.size(); ++i)
     phong.addMaterial(materials[i]);
 
+
+  for (int i = 0; i < 3; i++) {
+	  triangleBorders.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+  }
   // set the color and size of the sphere to represent the light sources
   // same sphere is used for all sources
   lightrep.setColor(Eigen::Vector4f(1.0, 1.0, 0.0, 1.0));
@@ -72,17 +76,10 @@ void Flyscene::initialize(int width, int height) {
   // the debug ray is a cylinder, set the radius and length of the cylinder
   ray.setSize(0.005, 1.f);
 
-  //Set up triangle normal from intersection
-  intersectNormal.setSize(0.005, 10.0);
-
-  //Set up reflected ray
-  reflectedRay.setSize(0.005, 10.0);
-
-
   
   intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
   
-  
+  hitCircles.push_back(Tucano::Shapes::Sphere(0.02));
 
 
   int capacity = 1000;
@@ -141,7 +138,10 @@ void Flyscene::paintGL(void) {
   scene_light.resetViewMatrix();
   scene_light.viewMatrix()->translate(-lights.back());
 
-  hitCircle.render(flycamera, scene_light);
+  //render hitCircles
+  for (Tucano::Shapes::Sphere hitCircle : hitCircles) {
+	  hitCircle.render(flycamera, scene_light);
+  }
 
   // render the scene using OpenGL and one light source
   phong.render(mesh, flycamera, scene_light);
@@ -150,17 +150,25 @@ void Flyscene::paintGL(void) {
   ray.render(flycamera, scene_light);
   camerarep.render(flycamera, scene_light);
   
-  reflectedRay.render(flycamera, scene_light);
+  for (Tucano::Shapes::Cylinder rRay : reflectedRays) {
+	  rRay.render(flycamera, scene_light);
+  }
 
   //render intersection of triangle normal
-  intersectNormal.render(flycamera, scene_light);
+  for (Tucano::Shapes::Cylinder intersectNormal : intersectNormals) {
+	  intersectNormal.render(flycamera, scene_light);
+  }
 
-  hitCircle.render(flycamera, scene_light);
+  //hitCircle.render(flycamera, scene_light);
 
   for (Tucano::Shapes::Cylinder light : intersectionLightRays) {
 	  light.render(flycamera, scene_light);
   }
   
+  //render triangle borders
+  for (int i = 0; i < triangleBorders.size(); ++i) {
+	  triangleBorders.at(i).render(flycamera, scene_light);
+  }
 
   // render ray tracing light sources as yellow spheres
   for (int i = 0; i < lights.size(); ++i) {
@@ -213,15 +221,191 @@ void Flyscene::createBox(Eigen::Vector3f point, Tucano::Shapes::Box & box) {
 
 // Creates (technically translates) a sphere at the point provided.
 void Flyscene::createHitPoint(Eigen::Vector3f& point) {
-	hitCircle.resetModelMatrix();
-	Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
-	modelMatrix.translate(point);
-	hitCircle.setModelMatrix(modelMatrix);
+	for (Tucano::Shapes::Sphere hitCircle : hitCircles) {
+		hitCircle.resetModelMatrix();
+		Eigen::Affine3f modelMatrix = hitCircle.getModelMatrix();
+		modelMatrix.translate(point);
+		hitCircle.setModelMatrix(modelMatrix);
+	}
+}
+
+void Flyscene::printVector(const Eigen::Vector3f vector) {
+	std::cout << "(" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")";
 }
 
 Tucano::Mesh& Flyscene::getMesh() {
 	return mesh;
 }
+
+void Flyscene::recursiveDebugRay(Eigen::Vector3f pos, Eigen::Vector3f dir, int n, Eigen::Vector3f screen_pos) {
+	if (n > 2) {
+		return;
+	}
+	Tucano::Shapes::Cylinder reflectedRay = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+	//// check whether the debug ray hits the (root) bounding box
+	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
+	//
+	bool intersected = false;
+	float t = std::numeric_limits<float>::max();
+	int intersectedTriangleIndex = -1;
+	if(hitBox) {
+		std::set<int> intersectedSet = octree.intersect(flycamera.getCenter(), screen_pos);
+		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
+		for (int i : intersectedSet) {
+			Tucano::Face currTriangle = mesh.getFace(i);
+			float intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
+			if (intersection != -72.f) {
+				intersected = true;
+				if (intersection < t) {
+					t = intersection;
+					intersectedTriangleIndex = i;
+				}
+				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
+			}
+		}
+	}
+	else {
+		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
+	}
+
+	if (intersected) {
+		//std::cout << "t = " << t << std::endl;
+		Eigen::Vector3f c = flycamera.getCenter();
+		Tucano::Face intersectedTriangle = mesh.getFace(intersectedTriangleIndex);
+
+		Eigen::Vector3f p0 = pos + (t * dir);
+		createHitPoint(p0);
+		float rayLength = sqrt((p0.x() - c.x()) * (p0.x() - c.x()) + (p0.y() - c.y()) * (p0.y() - c.y())
+			+ (p0.z() - c.z()) * (p0.z() - c.z()));
+		Eigen::Vector3f dest = c + dir;
+		Eigen::Vector3f hitColor = traceRay(c, dest, 0, lights, areaLight, false);
+
+		//highlight intersected triangle by outlining borders with cilinders
+		vector<GLuint> vertexIds = intersectedTriangle.vertex_ids;
+		Eigen::Vector3f vC1;
+		Eigen::Vector3f vC2;
+		Eigen::Vector3f vC3;
+		int count = 0;
+		for (GLuint idd : vertexIds) {
+			int id = idd + 1 - 1;
+			Eigen::Vector4f vertex = mesh.getShapeModelMatrix() * mesh.getVertex(id);
+			/*std::cout << "vertex " << id << " : (" << vertex.x() << ", " << vertex.y() << ", " << vertex.z() << ")"
+				<< std::endl;*/
+			Eigen::Vector3f vertex3f = Eigen::Vector3f(vertex.x(), vertex.y(), vertex.z());
+			switch (count) {
+			case 0:
+				vC1 = vertex3f;
+				break;
+			case 1:
+				vC2 = vertex3f;
+				break;
+			default:
+				vC3 = vertex3f;
+			}
+			count += 1;
+		}
+
+		for (int i = 0; i < 3; ++i) {
+			Eigen::Vector3f v1, v2;
+			switch (i) {
+			case 0:
+				v1 = vC1;
+				v2 = vC2;
+				break;
+			case 1:
+				v1 = vC2;
+				v2 = vC3;
+				break;
+			default:
+				v1 = vC3;
+				v2 = vC1;
+			}
+			Eigen::Vector3f diff = v2 - v1;
+			float size = sqrt(diff.x() * diff.x() + diff.y() * diff.y() + diff.z() * diff.z());
+			Eigen::Vector3f diffNormalized = diff / size;
+			triangleBorders.push_back(Tucano::Shapes::Cylinder(0.02f, size, 4, 8));
+			triangleBorders.at(i).setSize(0.005f, size);
+			triangleBorders.at(i).setOriginOrientation(v1, diffNormalized);
+			triangleBorders.at(i).setColor(Eigen::Vector4f(1 - hitColor.x(), 1 - hitColor.y(), 1 - hitColor.z(), 1.f));
+			/*std::cout << "Border " << i + 1 << " : origin = (" << v1.x() << ", " << v1.y() << ", " << v1.z() << ")"
+				<< std::endl << "           direction = (" << diff.x() << ", " << diff.y() << ", " << diff.z() << ")"
+				<< std::endl;*/
+		}
+
+		//Eigen::Vector3f distVec = t * dir;
+		float dist = std::numeric_limits<float>::max();//sqrt(distVec.x() * distVec.x() + distVec.y() * distVec.y() + distVec.z() * distVec.z());
+		Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
+
+		Tucano::Shapes::Cylinder intersectNormal = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+		intersectNormal.setOriginOrientation(p0, normalTri);
+		intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
+		intersectNormal.setSize(0.005, 0.3);
+		intersectNormals.push_back(intersectNormal);
+
+		Eigen::Vector3f reflectedDir = dir - 2 * dir.dot(normalTri) * normalTri;
+		reflectedRay.setOriginOrientation(p0, reflectedDir);
+		reflectedRay.setSize(0.005, dist);
+		reflectedRays.push_back(reflectedRay);
+
+		if (n == 0) {
+			ray.setSize(0.005, rayLength);
+		}
+
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			Eigen::Vector3f directionLight = (p0 - lights.at(i));
+			intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
+			intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
+			float distLight = sqrt(directionLight.x() * directionLight.x()
+				+ directionLight.y() * directionLight.y()
+				+ directionLight.z() * directionLight.z());
+			intersectionLightRays.at(i).setSize(0.005, distLight);
+		}
+
+		std::cout << std::endl;
+		std::cout << "-------------------------------------------------------------" << std::endl;
+		std::cout << "                      DEBUG RAY INFO " << "(level = " << n << ")" << std::endl;
+		std::cout << "                      ==============                       " << std::endl;
+		std::cout << std::endl;
+		std::cout << " Hitpoint = "; printVector(p0); std::cout << std::endl;
+		std::cout << " Distance = " << rayLength << std::endl;
+		std::cout << " Normal vector = "; printVector(normalTri); std::cout << std::endl;
+		std::cout << " Reflection vector = "; printVector(reflectedDir); std::cout << std::endl;
+		std::cout << " Color rendered = "; printVector(hitColor); std::cout << std::endl;
+		std::cout << std::endl;
+		std::cout << " HIT TRIANGLE INFO                    " << std::endl;
+		std::cout << "                   Vertex 1 = "; printVector(vC1); std::cout << std::endl;
+		std::cout << "                   Vertex 2 = "; printVector(vC2); std::cout << std::endl;
+		std::cout << "                   Vertex 3 = "; printVector(vC3); std::cout << std::endl;
+		std::cout << "-------------------------------------------------------------" << std::endl;
+		recursiveDebugRay(p0, reflectedDir, n + 1, screen_pos);
+	}
+
+	else {
+		Eigen::Vector3f p0 = pos + (std::numeric_limits<float>::max() * dir);
+		createHitPoint(p0);
+
+		//intersectNormal.setSize(0.005, 0);
+		reflectedRay.setSize(0.005, 0);
+		reflectedRays.push_back(reflectedRay);
+
+		if (n == 0) {
+			ray.setSize(0.005, std::numeric_limits<float>::max());
+		}
+
+
+		for (int i = 0; i < intersectionLightRays.size(); i++) {
+			intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
+			intersectionLightRays.at(i).setSize(0.005, 0);
+		}
+
+		//boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+		//  for (int i = 0; i < leafBoxes.size(); i++) {
+		//	  leafBoxesVisual.at(i) = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+		//  }
+	}
+}
+
 
 void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 
@@ -240,113 +424,32 @@ void Flyscene::createDebugRay(const Eigen::Vector2f& mouse_pos) {
 	camerarep.resetModelMatrix();
 	camerarep.setModelMatrix(flycamera.getViewMatrix().inverse());
 
-	float intersection;
+	//float intersection;
+	while (triangleBorders.size() > 0) {
+		triangleBorders.pop_back();
+	}
+	while (reflectedRays.size() > 0) {
+		reflectedRays.pop_back();
+	}
+	while (hitCircles.size() > 0) {
+		hitCircles.pop_back();
+	}
+	while (intersectNormals.size() > 0) {
+		intersectNormals.pop_back();
+	}
 
-
-	// check whether the debug ray hits the (root) bounding box
-	bool hitBox = octree.box.boxIntersect(flycamera.getCenter(), screen_pos);
+	recursiveDebugRay(screen_pos, dir, 0, screen_pos);
+	boxMin.resetModelMatrix();\
+	Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
+	boxMinModelMatrix.translate(objectBox.getMin());
+	boxMin.setModelMatrix(boxMinModelMatrix);
+	boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 	
-	bool intersected = false;
-	float t = std::numeric_limits<float>::max();
-	int intersectedTriangleIndex = -1;
-	if(hitBox) {
-		std::set<int> intersectedSet = octree.intersect(flycamera.getCenter(), screen_pos);
-		ray.setColor(Eigen::Vector4f(0.f, 0.f, 1.f, 1.f)); // if the ray intersects the root box but not the mesh, it should be blue
-		for (int i : intersectedSet) {
-			Tucano::Face currTriangle = mesh.getFace(i);
-			intersection = rayTriangleIntersection(screen_pos, dir, currTriangle);
-			if (intersection != -72.f) {
-				intersected = true;
-				if (intersection < t) {
-					t = intersection;
-					intersectedTriangleIndex = i;
-				}
-				ray.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f)); // if the ray intersects the mesh, it should  be green
-			}
-		}
-	}
-	else {
-		ray.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f)); // if the ray misses, it should be red
-	}
-
-  if (intersected) {
-	  Eigen::Vector3f p0 = screen_pos + (t * dir);
-	  createHitPoint(p0);
-	  std::cout << "MATERIAL NAME: " << materials[mesh.getFace(intersectedTriangleIndex).material_id].getName();
-	  triangleToModify = mesh.getFace(intersectedTriangleIndex);
-	  //Eigen::Vector3f distVec = t * dir;
-	  float dist = std::numeric_limits<float>::max();
-	  Eigen::Vector3f normalTri = mesh.getFace(intersectedTriangleIndex).normal;
-		
-	  Tucano::Material::Mtl material = materials[mesh.getFace(intersectedTriangleIndex).material_id];
-	  float c1 = abs(dir.dot(normalTri));
-	  float c2 = sqrt(1 - (pow((1 / material.getOpticalDensity()), 2)) * (1 - pow(c1, 2)));
-	  Eigen::Vector3f refractedRay = (1 / material.getOpticalDensity()) * dir + ((1 / material.getOpticalDensity()) * c1 - c2) * normalTri;
-
-	  intersectNormal.setOriginOrientation(p0, normalTri);
-	  intersectNormal.setColor(Eigen::Vector4f(1.f, 0.f, 0.f, 1.f));
-	  intersectNormal.setSize(0.005, 0.3);
-
-	  reflectedRay.setOriginOrientation(p0, refractedRay);
-	  reflectedRay.setSize(0.005, dist);
-
-	  ray.setSize(0.005, dist);
-
-
-	  for (int i = 0; i < intersectionLightRays.size(); i++) {
-		  Eigen::Vector3f directionLight = (p0 - lights.at(i));
-		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), directionLight.normalized());
-		  intersectionLightRays.at(i).setColor(Eigen::Vector4f(0.5f, 0.5f, 0.f, 1.f));
-		  float distLight = sqrt(directionLight.x() * directionLight.x() 
-			  + directionLight.y() * directionLight.y() 
-			  + directionLight.z() * directionLight.z());
-		  intersectionLightRays.at(i).setSize(0.005, distLight);
-	  }
-
-	  /*for (int i = 0; i < leafBoxes.size(); i++) {
-		  float width = leafBoxes.at(i).second.x() - leafBoxes.at(i).first.x();
-		  float height = leafBoxes.at(i).second.y() - leafBoxes.at(i).first.y();
-		  float depth = leafBoxes.at(i).second.z() - leafBoxes.at(i).first.z();
-		  leafBoxesVisual.at(i) = Tucano::Shapes::Box(width, height, depth);
-		  leafBoxesVisual.at(i).setColor(Eigen::Vector4f(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, 0.1f));
-		  Eigen::Vector3f diff = leafBoxes.at(i).first + ((leafBoxes.at(i).second - leafBoxes.at(i).first) /2.f);
-		  diff *= SCALAR;
-		  createBox(diff, leafBoxesVisual.at(i));
-	  }*/
-  }
-  else {
-	  boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
-
-	  Eigen::Vector3f p0 = screen_pos + (std::numeric_limits<float>::max() * dir);
-	  createHitPoint(p0);
-
-	  intersectNormal.setSize(0.005, 0);
-	  reflectedRay.setSize(0.005, 0);
-
-	  ray.setSize(0.005, std::numeric_limits<float>::max());
-
-
-	  for (int i = 0; i < intersectionLightRays.size(); i++) {
-		  intersectionLightRays.at(i).setOriginOrientation(lights.at(i), Eigen::Vector3f(0.f, 0.f, 1.f));
-		  intersectionLightRays.at(i).setSize(0.005, 0);
-	  }
-
-	  for (int i = 0; i < leafBoxes.size(); i++) {
-		  leafBoxesVisual.at(i) = Tucano::Shapes::Box(0.f, 0.f, 0.f);
-	  }
-  }
-
-  boxMin.resetModelMatrix();
-  Eigen::Affine3f boxMinModelMatrix = boxMin.getModelMatrix();
-  boxMinModelMatrix.translate(objectBox.getMin());
-  boxMin.setModelMatrix(boxMinModelMatrix);
-  boxMin.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
-
-  boxMax.resetModelMatrix();
-  Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
-  boxMaxModelMatrix.translate(objectBox.getMax());
-  boxMax.setModelMatrix(boxMaxModelMatrix);
-  boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
+	boxMax.resetModelMatrix();
+	Eigen::Affine3f boxMaxModelMatrix = boxMax.getModelMatrix();
+	boxMaxModelMatrix.translate(objectBox.getMax());\
+	boxMax.setModelMatrix(boxMaxModelMatrix);
+	boxMax.setColor(Eigen::Vector4f(0.f, 1.f, 0.f, 1.f));
 
 
   //Show X, Y and Z axies
