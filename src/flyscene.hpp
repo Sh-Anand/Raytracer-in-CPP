@@ -11,10 +11,19 @@
 #include <tucano/shapes/camerarep.hpp>
 #include <tucano/shapes/cylinder.hpp>
 #include <tucano/shapes/sphere.hpp>
+#include <tucano/shapes/box.hpp>
 #include <tucano/utils/flycamera.hpp>
 #include <tucano/utils/imageIO.hpp>
 #include <tucano/utils/mtlIO.hpp>
 #include <tucano/utils/objimporter.hpp>
+#include <chrono>
+#include <thread>
+#include <mutex>
+#include "../arealight.hpp"
+#include "../arealight.cpp"
+
+#include "boundingBox.hpp"
+#include "boxTree.hpp"
 
 class Flyscene {
 
@@ -47,7 +56,17 @@ public:
   /**
    * @brief Add a new light source
    */
-  void addLight(void) { lights.push_back(flycamera.getCenter()); }
+  void addLight(void) {
+	  lights.push_back(flycamera.getCenter());
+	  intersectionLightRays.push_back(Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64));
+	  intersectionLightRays.at(intersectionLightRays.size() - 1).setSize(0.005, 1);
+  }
+
+  /**
+  * @brief Print vector in the form "(x, y, z)" for debugging purposes
+  * @param vector Vector to be printed.
+  */
+  void printVector(const Eigen::Vector3f vector);
 
   /**
    * @brief Create a debug ray at the current camera location and passing
@@ -56,22 +75,59 @@ public:
    */
   void createDebugRay(const Eigen::Vector2f &mouse_pos);
 
+
+  void recursiveDebugRay(const Eigen::Vector3f pos, const Eigen::Vector3f dir, const int n, Eigen::Vector3f screen_pos);
+
   /**
    * @brief raytrace your scene from current camera position   
    */
   void raytraceScene(int width = 0, int height = 0);
 
+
+ 
   /**
    * @brief trace a single ray from the camera passing through dest
    * @param origin Ray origin
    * @param dest Other point on the ray, usually screen coordinates
    * @return a RGB color
    */
-  Eigen::Vector3f traceRay(Eigen::Vector3f &origin, Eigen::Vector3f &dest);
+  Eigen::Vector3f traceRay(Eigen::Vector3f& origin, Eigen::Vector3f& direction, int level, vector<Eigen::Vector3f>& lights, bool countRay);
+
+
+  float rayPlaneIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Eigen::Vector3f& planeNormal, Eigen::Vector3f& planePoint);
+
+  float rayTriangleIntersection(Eigen::Vector3f& rayPoint, Eigen::Vector3f& rayDirection, Tucano::Face& triangle);
+
+  void createHitPoint(Eigen::Vector3f& point);
+
+  void createBox(Eigen::Vector3f point, Tucano::Shapes::Box & box);
+
+  Tucano::Mesh& getMesh();
+
+  Eigen::Vector3f getInterpolatedNormal(Eigen::Vector3f& trianglePoint, Tucano::Face& triangle);
+
+  Eigen::Vector3f phongShade(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
+
+  Eigen::Vector3f phongShadePoint(Eigen::Vector3f& origin, Eigen::Vector3f& hitPoint, Tucano::Face& triangle, vector<Eigen::Vector3f>& lights);
+
+  float fresnel(Eigen::Vector3f& I, Eigen::Vector3f& N, float& ior);
+
+  bool lightStrikes(Eigen::Vector3f& hitPoint, vector<Eigen::Vector3f>& lights, bool visibleLights[]);
+
+  arealight createAreaLight(Eigen::Vector3f corner, float lengthX, float lengthY, int usteps, int vsteps);
+
+  vector<Eigen::Vector3f> createSpherePoint(Eigen::Vector3f lightPoint);
+
+  void modifyTriangle();
+
+  void setDebugRayDepth();
 
 private:
   // A simple phong shader for rendering meshes
   Tucano::Effects::PhongMaterial phong;
+
+  /// A small debug sphere to see where ray intersects
+  vector<Tucano::Shapes::Sphere> hitCircles;
 
   // A fly through camera
   Tucano::Flycamera flycamera;
@@ -93,13 +149,54 @@ private:
   Tucano::Camera scene_light;
 
   /// A very thin cylinder to draw a debug ray
-  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder ray = Tucano::Shapes::Cylinder(0.05, 1.0, 16, 64);
+
+  /// reflected light rays
+  vector<Tucano::Shapes::Cylinder> reflectedRays;
+
+  /// Intersected normalw
+  vector<Tucano::Shapes::Cylinder> intersectNormals;
+
+  // light sources for ray tracing
+  vector<Tucano::Shapes::Cylinder> intersectionLightRays;
+
+  //triangle borders
+  vector<Tucano::Shapes::Cylinder> triangleBorders;
 
   // Scene meshes
   Tucano::Mesh mesh;
 
   /// MTL materials
   vector<Tucano::Material::Mtl> materials;
+  
+  // Bounding box for the object
+  BoundingBox objectBox;
+
+  // Octree containing indices of the faces of our mesh
+  BoxTree octree;
+  
+  //Visual aid object for a bounding box
+  Tucano::Shapes::Box boundingboxVisual = Tucano::Shapes::Box(0.f, 0.f, 0.f);
+
+
+  Tucano::Shapes::Sphere boxMin = Tucano::Shapes::Sphere(0.02);
+  Tucano::Shapes::Sphere boxMax = Tucano::Shapes::Sphere(0.02);
+
+  Tucano::Shapes::Cylinder X_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder Y_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+  Tucano::Shapes::Cylinder Z_axies = Tucano::Shapes::Cylinder(0.1, 1.0, 16, 64);
+
+  bool areaLight;
+
+  bool pointLight;
+  
+  Tucano::Face triangleToModify;
+
+  std::vector<pair<Eigen::Vector3f, Eigen::Vector3f>> leafBoxes;
+  std::vector<Tucano::Shapes::Box> leafBoxesVisual;
+
+  int maxDebugRayDepth = 2;
+
 };
 
 #endif // FLYSCENE

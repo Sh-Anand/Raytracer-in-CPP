@@ -50,22 +50,28 @@ void initialize(void) {
   std::cout << "L    : Add new light source at current camera position."
             << std::endl;
   std::cout << "T    : Ray trace the scene." << std::endl;
+  std::cout << "M    : Modify selected triangle." << std::endl;
+  std::cout << "N    : Set maximum recursive depth of the debug ray." << std::endl;
   std::cout << "Esc  : Close application." << std::endl;
   std::cout << " ********************************* " << std::endl;
 }
 
 void keyCallback(GLFWwindow *window, int key, int scancode, int action,
                  int mods) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    glfwSetWindowShouldClose(window, 1);
-  else if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    flyscene->getCamera()->reset();
-  else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    flyscene->createDebugRay(mouse_pos);
-  else if (key == GLFW_KEY_L && action == GLFW_PRESS)
-    flyscene->addLight();
-  else if (key == GLFW_KEY_T && action == GLFW_PRESS)
-    flyscene->raytraceScene();
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, 1);
+	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
+		flyscene->getCamera()->reset();
+	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		flyscene->createDebugRay(mouse_pos);
+	else if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		flyscene->addLight();
+	else if (key == GLFW_KEY_T && action == GLFW_PRESS)
+		flyscene->raytraceScene();
+	else if (key == GLFW_KEY_M && action == GLFW_PRESS)
+		flyscene->modifyTriangle();
+	else if (key == GLFW_KEY_N && action == GLFW_PRESS)
+		flyscene->setDebugRayDepth();
 }
 
 static void mouseButtonCallback(GLFWwindow *window, int button, int action,
